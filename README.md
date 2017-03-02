@@ -73,3 +73,9 @@ image_minifier:
   pngquant: false
   progressive: false
 ```
+
+deploy
+
+```
+npm install hexo-deployer-git --save
+```

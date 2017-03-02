@@ -11,7 +11,7 @@ npm install
 
 plugins:
 
-1. hexo-asset-image 图片
+### hexo-asset-image 图片
 
 https://github.com/CodeFalling/hexo-asset-image
 
@@ -35,7 +35,7 @@ MacGesture2-Publish
 MacGesture2-Publish.md
 ```
 
-2. hexo-renderer-jade hexo-generator-archive for anatole
+### hexo-renderer-jade hexo-generator-archive for anatole
 
 https://munen.cc/tech/Anatole.html
 
@@ -54,7 +54,7 @@ archive_generator:
   daily: false
 ```
 
-3. Hexo-all-minifier  文件压缩
+### Hexo-all-minifier  文件压缩
 
 https://github.com/chenzhutian/hexo-all-minifier
 

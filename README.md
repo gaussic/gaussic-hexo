@@ -1,5 +1,5 @@
 # gaussic-hexo
-hexo blog
+hexo blog: https://gaussic.github.io
 
 hexo
 

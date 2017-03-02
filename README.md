@@ -1,0 +1,2 @@
+# gaussic-hexo
+hexo blog

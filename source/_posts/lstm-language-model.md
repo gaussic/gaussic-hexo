@@ -1,7 +1,7 @@
 ---
 title: 基于LSTM的语言模型
 date: 2017-03-02 14:59:17
-tags:  LSTM, Language Model
+tags:  [LSTM, Language Model]
 categories: Deep Learning
 ---
 

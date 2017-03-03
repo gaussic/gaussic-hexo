@@ -441,7 +441,7 @@ model.add(Convolution1D(nb_filter=nb_filter,
 model.add(GlobalMaxPooling1D())
 ```
 
-对卷积后的序列做1维最大池化操作，以`[10, 50]`的序列为例，序列的长度为10即10行，每个特征50位即50列，最大池化操作取每一列的最大值，最后输出变为`[10]`的一个向量。
+对卷积后的序列做1维最大池化操作，以`[10, 50]`的序列为例，序列的长度为10即10行，每个特征50位即50列，最大池化操作取每一列的最大值，最后输出变为`[50]`的一个向量。
 
 官方的实现如下：
 
@@ -533,3 +533,313 @@ Epoch 10/10
 
 训练后，在验证集上得到了0.8851的准确率。
 
+## LSTM
+
+LSTM在NLP任务中已经成为了较为基础的工具，但是在这个任务中，由于数据集较小，所以无法发挥其巨大的优势，另外由于其训练速度较慢，所以有时候一些更快更简便的算法可能是个更好的选择。其详细代码如下：
+
+```
+from __future__ import print_function
+import numpy as np
+np.random.seed(1337)  # for reproducibility
+
+from keras.preprocessing import sequence
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Embedding
+from keras.layers import LSTM
+from keras.datasets import imdb
+
+# 设定参数
+max_features = 20000   # 词汇表大小
+# cut texts after this number of words (among top max_features most common words)
+# 裁剪文本为 maxlen 大小的长度（取最后部分，基于前 max_features 个常用词）
+maxlen = 80  
+batch_size = 32   # 批数据量大小
+
+# 载入数据
+print('Loading data...')
+(X_train, y_train), (X_test, y_test) = imdb.load_data(nb_words=max_features)
+print(len(X_train), 'train sequences')
+print(len(X_test), 'test sequences')
+
+# 裁剪为 maxlen 长度
+print('Pad sequences (samples x time)')
+X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
+X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+print('X_train shape:', X_train.shape)
+print('X_test shape:', X_test.shape)
+
+# 构建模型
+print('Build model...')
+model = Sequential()
+# 嵌入层，每个词维度为128
+model.add(Embedding(max_features, 128, dropout=0.2))
+# LSTM层，输出维度128，可以尝试着换成 GRU 试试
+model.add(LSTM(128, dropout_W=0.2, dropout_U=0.2))  # try using a GRU instead, for fun
+model.add(Dense(1))   # 单神经元全连接层
+model.add(Activation('sigmoid'))   # sigmoid 激活函数层
+
+model.summary()   # 模型概述
+
+# try using different optimizers and different optimizer configs
+# 这里可以尝试使用不同的损失函数和优化器
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+# 训练，迭代 15 次，使用测试集做验证（真正实验时最好不要这样做）
+print('Train...')
+model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=15,
+          validation_data=(X_test, y_test))
+
+# 评估误差和准确率
+score, acc = model.evaluate(X_test, y_test,
+                            batch_size=batch_size)
+print('Test score:', score)
+print('Test accuracy:', acc)
+```
+
+### 模型构建
+
+IMDB的LSTM模型构建非常简单，与 FastText 相类似，以下做总体介绍：
+
+```
+print('Build model...')
+model = Sequential()
+# 嵌入层，每个词维度为128
+model.add(Embedding(max_features, 128, dropout=0.2))
+# LSTM层，输出维度128，可以尝试着换成 GRU 试试
+model.add(LSTM(128, dropout_W=0.2, dropout_U=0.2))  # try using a GRU instead, for fun
+model.add(Dense(1))   # 单神经元全连接层
+model.add(Activation('sigmoid'))   # sigmoid 激活函数层
+```
+
+由上可以看到，LSTM模型只是将 FastText 的 `GlobalAveragePooling1D` 换成了 `LSTM` 神经网络层，输入先通过嵌入层转换为词向量序列表示，然后经过`LSTM`转换为128维的向量，然后直接接上`sigmoid`分类器。
+
+关于LSTM的两个dropout参数，其原理与FastText中类似，可以查看官方文档。
+
+整个模型的结构如下：
+
+```
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+embedding_1 (Embedding)          (None, None, 128)     2560000     embedding_input_1[0][0]
+____________________________________________________________________________________________________
+lstm_1 (LSTM)                    (None, 128)           131584      embedding_1[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 1)             129         lstm_1[0][0]
+____________________________________________________________________________________________________
+activation_1 (Activation)        (None, 1)             0           dense_1[0][0]
+====================================================================================================
+```
+
+### 训练
+
+训练过程与 FastText 和 CNN 相同，不再赘述。
+
+其结果如下：
+
+```
+Train on 25000 samples, validate on 25000 samples
+Epoch 1/15
+25000/25000 [==============================] - 113s - loss: 0.5194 - acc: 0.7420 - val_loss: 0.3996 - val_acc: 0.8220
+Epoch 2/15
+25000/25000 [==============================] - 114s - loss: 0.3758 - acc: 0.8404 - val_loss: 0.3813 - val_acc: 0.8342
+Epoch 3/15
+25000/25000 [==============================] - 116s - loss: 0.2956 - acc: 0.8784 - val_loss: 0.4136 - val_acc: 0.8278
+Epoch 4/15
+25000/25000 [==============================] - 116s - loss: 0.2414 - acc: 0.9032 - val_loss: 0.3953 - val_acc: 0.8372
+Epoch 5/15
+25000/25000 [==============================] - 115s - loss: 0.2006 - acc: 0.9208 - val_loss: 0.4037 - val_acc: 0.8311
+Epoch 6/15
+25000/25000 [==============================] - 115s - loss: 0.1644 - acc: 0.9376 - val_loss: 0.4361 - val_acc: 0.8358
+Epoch 7/15
+25000/25000 [==============================] - 133s - loss: 0.1468 - acc: 0.9448 - val_loss: 0.4974 - val_acc: 0.8313
+Epoch 8/15
+25000/25000 [==============================] - 114s - loss: 0.1230 - acc: 0.9532 - val_loss: 0.5178 - val_acc: 0.8256
+Epoch 9/15
+25000/25000 [==============================] - 114s - loss: 0.1087 - acc: 0.9598 - val_loss: 0.5401 - val_acc: 0.8232
+Epoch 10/15
+25000/25000 [==============================] - 117s - loss: 0.0979 - acc: 0.9637 - val_loss: 0.5493 - val_acc: 0.8271
+Epoch 11/15
+25000/25000 [==============================] - 119s - loss: 0.0867 - acc: 0.9685 - val_loss: 0.6539 - val_acc: 0.8235
+Epoch 12/15
+25000/25000 [==============================] - 113s - loss: 0.0806 - acc: 0.9710 - val_loss: 0.5976 - val_acc: 0.8170
+Epoch 13/15
+25000/25000 [==============================] - 115s - loss: 0.0724 - acc: 0.9730 - val_loss: 0.6591 - val_acc: 0.8180
+Epoch 14/15
+25000/25000 [==============================] - 115s - loss: 0.0697 - acc: 0.9758 - val_loss: 0.6542 - val_acc: 0.8165
+Epoch 15/15
+25000/25000 [==============================] - 114s - loss: 0.0634 - acc: 0.9771 - val_loss: 0.6644 - val_acc: 0.8200
+24992/25000 [============================>.] - ETA: 0sTest score: 0.664366141396
+Test accuracy: 0.82
+```
+
+在测试集上得到了0.82的准确率。
+
+## CNN + LSTM
+
+在阅读了上面三种方案的解析，对于 CNN+LSTM 方案的解析应该不会陌生。CNN+LSTM 是 CNN 和 LSTM 的结合体，其详细代码如下：
+
+```
+from __future__ import print_function
+import numpy as np
+np.random.seed(1337)  # for reproducibility
+
+from keras.preprocessing import sequence
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation
+from keras.layers import Embedding
+from keras.layers import LSTM
+from keras.layers import Convolution1D, MaxPooling1D
+from keras.datasets import imdb
+
+
+# Embedding  词嵌入
+max_features = 20000   # 词汇表大小
+maxlen = 100           # 序列最大长度
+embedding_size = 128   # 词向量维度
+  
+# Convolution  卷积
+filter_length = 5    # 滤波器长度
+nb_filter = 64       # 滤波器个数
+pool_length = 4      # 池化长度
+
+# LSTM
+lstm_output_size = 70   # LSTM 层输出尺寸
+
+# Training   训练参数
+batch_size = 30   # 批数据量大小
+nb_epoch = 2      # 迭代次数
+
+'''
+Note:
+batch_size is highly sensitive.
+Only 2 epochs are needed as the dataset is very small.
+
+注意：
+batch_size 这个值非常敏感。
+由于数据集很小，所有2轮迭代足够了。
+'''
+
+# 载入模型
+print('Loading data...')
+(X_train, y_train), (X_test, y_test) = imdb.load_data(nb_words=max_features)
+print(len(X_train), 'train sequences')
+print(len(X_test), 'test sequences')
+
+# 填充到固定长度 maxlen
+print('Pad sequences (samples x time)')
+X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
+X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+print('X_train shape:', X_train.shape)
+print('X_test shape:', X_test.shape)
+
+print('Build model...')
+# 构建模型
+model = Sequential()
+model.add(Embedding(max_features, embedding_size, input_length=maxlen))  # 词嵌入层
+model.add(Dropout(0.25))       # Dropout层
+
+# 1D 卷积层，对词嵌入层输出做卷积操作
+model.add(Convolution1D(nb_filter=nb_filter,
+                        filter_length=filter_length,
+                        border_mode='valid',
+                        activation='relu',
+                        subsample_length=1))
+# 池化层
+model.add(MaxPooling1D(pool_length=pool_length))
+# LSTM 循环层
+model.add(LSTM(lstm_output_size))
+# 全连接层，只有一个神经元，输入是否为正面情感值
+model.add(Dense(1))
+model.add(Activation('sigmoid'))  # sigmoid判断情感
+
+model.summary()   # 模型概述
+
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+# 训练
+print('Train...')
+model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+          validation_data=(X_test, y_test))
+
+# 测试
+score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+print('Test score:', score)
+print('Test accuracy:', acc)
+
+```
+
+### 模型构建
+
+提取出模型构建的代码：
+
+```
+model = Sequential()
+model.add(Embedding(max_features, embedding_size, input_length=maxlen))  # 词嵌入层
+model.add(Dropout(0.25))       # Dropout层
+
+# 1D 卷积层，对词嵌入层输出做卷积操作
+model.add(Convolution1D(nb_filter=nb_filter,
+                        filter_length=filter_length,
+                        border_mode='valid',
+                        activation='relu',
+                        subsample_length=1))
+# 池化层
+model.add(MaxPooling1D(pool_length=pool_length))
+# LSTM 循环层
+model.add(LSTM(lstm_output_size))
+# 全连接层，只有一个神经元，输入是否为正面情感值
+model.add(Dense(1))
+model.add(Activation('sigmoid'))  # sigmoid判断情感
+```
+
+卷积之前的操作与CNN方法（包括卷积）类似，不再赘述。
+
+池化层由 `GlobalMaxPooling1D` 换成了 `MaxPooling1D`，两者的区别在于，前者池化为一个向量，后者池化后让然为一个序列，但是规模缩小到原始的 1/ pool_length。
+
+详细的，`[100, 128]`的序列（100为序列长度，50为词嵌入维度），经过 `Convlution1D(nb_filters=64, filter_length=5)` 后，变为 `[96, 64]`，再经过 `MaxPooling1D(pool_length=4)` 后，变成了 `[24, 64]`。
+
+从LSTM开始，接下来的操作就与 LSTM 方法类似，此处不再赘述。
+
+整个模型的结构如下(注意观察维度变化)：
+
+```
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+embedding_1 (Embedding)          (None, 100, 128)      2560000     embedding_input_1[0][0]
+____________________________________________________________________________________________________
+dropout_1 (Dropout)              (None, 100, 128)      0           embedding_1[0][0]
+____________________________________________________________________________________________________
+convolution1d_1 (Convolution1D)  (None, 96, 64)        41024       dropout_1[0][0]
+____________________________________________________________________________________________________
+maxpooling1d_1 (MaxPooling1D)    (None, 24, 64)        0           convolution1d_1[0][0]
+____________________________________________________________________________________________________
+lstm_1 (LSTM)                    (None, 70)            37800       maxpooling1d_1[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 1)             71          lstm_1[0][0]
+____________________________________________________________________________________________________
+activation_1 (Activation)        (None, 1)             0           dense_1[0][0]
+====================================================================================================
+```
+
+### 训练
+
+训练过程不再赘述。
+
+其结果如下：
+
+```
+Train on 25000 samples, validate on 25000 samples
+Epoch 1/2
+25000/25000 [==============================] - 45s - loss: 0.3825 - acc: 0.8208 - val_loss: 0.3418 - val_acc: 0.8499
+Epoch 2/2
+25000/25000 [==============================] - 42s - loss: 0.1969 - acc: 0.9250 - val_loss: 0.3417 - val_acc: 0.8528
+Test score: 0.341682006605
+Test accuracy: 0.852760059094
+```
+
+训练两轮就达到了0.85276的效果。

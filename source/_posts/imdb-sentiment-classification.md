@@ -254,7 +254,7 @@ class GlobalAveragePooling1D(_GlobalPooling1D):
         return K.mean(x, axis=1)
 ```
 
-### Dense
+#### Dense
 
 由于 IMDB 情感数据集只有正负两个类别，因此全连接层是只有一个神经元的二元分类，使用 `sigmoid` 激活函数。
 
@@ -262,7 +262,7 @@ class GlobalAveragePooling1D(_GlobalPooling1D):
 model.add(Dense(1, activation='sigmoid'))
 ```
 
-## 训练
+### 训练
 
 在该样例的二元分类器中，使用了二元交叉熵作为损失函数，使用 `adam` 作为优化器，使用 `accuracy` 作为评估矩阵。
 

@@ -7,6 +7,10 @@ categories: Deep Learning
 
 Github代码： [Keras样例解析](https://github.com/gaussic/keras-examples)
 
+欢迎光临我的博客：[https://gaussic.github.io/2017/03/03/imdb-sentiment-classification/](https://gaussic.github.io/2017/03/03/imdb-sentiment-classification/)
+
+(转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io))
+
 Keras的官方Examples里面展示了四种训练IMDB文本情感分类的方法，借助这4个Python程序，可以对Keras的使用做一定的了解。以下是对各个样例的解析。
 
 ## IMDB 数据集
@@ -33,7 +37,7 @@ FastText是Joulin等人在[Bags of Tricks for Efficient Text Classification](htt
 
 ![imdb_fasttext](imdb-sentiment-classification/fasttext.png)
 
-给定一个输入序列，首先提取N gram特征得到N gram特征序列，然后对每个特征做词嵌入操作，在把该序列的所有特征词向量相加做平均，作为模型的隐藏层，最后在输出层接任何的分类器（常用的softmax）就可以进行分类了。
+给定一个输入序列，首先提取N gram特征得到N gram特征序列，然后对每个特征做词嵌入操作，再把该序列的所有特征词向量相加做平均，作为模型的隐藏层，最后在输出层接任何的分类器（常用的softmax）就可以进行分类了。
 
 这个思路类似于平均化的Sentence Embedding，将句子中的所有词向量相加求平均，得到句子的向量表示。
 
@@ -677,6 +681,8 @@ Test accuracy: 0.82
 
 在测试集上得到了0.82的准确率。
 
+(转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io))
+
 ## CNN + LSTM
 
 在阅读了上面三种方案的解析，对于 CNN+LSTM 方案的解析应该不会陌生。CNN+LSTM 是 CNN 和 LSTM 的结合体，其详细代码如下：
@@ -843,3 +849,5 @@ Test accuracy: 0.852760059094
 ```
 
 训练两轮就达到了0.85276的效果。
+
+(转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io))

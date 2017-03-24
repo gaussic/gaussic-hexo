@@ -41,7 +41,7 @@ https://munen.cc/tech/Anatole.html
 
 ```
 npm install --save hexo-renderer-jade hexo-generator-archive
-git clone https://github.com/Ben02/hexo-theme-Anatole.git themes/anatole
+git clone https://github.com/gaussic/hexo-theme-Anatole.git themes/anatole
 ```
 
 编辑 `_config.yml`, 找到 `theme:` 并把那一行改成 `theme: anatole`, 然后增加下面条目:

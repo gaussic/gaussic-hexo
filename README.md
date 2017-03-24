@@ -1,12 +1,20 @@
 # gaussic-hexo
 hexo blog: https://gaussic.github.io
 
-hexo
+## 安装 hexo
 
 ```
-npm install hexo-cli -g
-hexo init <folder>
-npm install
+$ npm install hexo-cli -g
+```
+
+如果安装失败可参照：[npm安装hexo-cli报Building dtrace-provider failed错误](https://github.com/gaussic/code-collector/blob/master/bugs/npm%E5%AE%89%E8%A3%85hexo-cli%E6%8A%A5Building%20dtrace-provider%20failed%E9%94%99%E8%AF%AF.md)
+
+## 设置
+
+```
+$ git clone git@github.com:gaussic/gaussic-hexo.git
+$ cd gaussic-hexo
+$ npm install
 ```
 
 plugins:
@@ -52,26 +60,6 @@ archive_generator:
   yearly: false
   monthly: false
   daily: false
-```
-
-### Hexo-all-minifier  文件压缩
-
-https://github.com/chenzhutian/hexo-all-minifier
-
-```
-npm install hexo-all-minifier --save
-```
-
-_config.yml
-
-```
-image_minifier:
-  enable: true
-  interlaced: false
-  multipass: false
-  optimizationLevel: 2
-  pngquant: false
-  progressive: false
 ```
 
 deploy

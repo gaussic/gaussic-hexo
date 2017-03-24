@@ -2,7 +2,7 @@
 title: Caffe for Windows安装与配置
 date: 2016-08-02 17:26:08
 tags: [Caffe, Deep Learning]
-categories: DeepLearning
+categories: Deep Learning
 author: Gaussic
 ---
 

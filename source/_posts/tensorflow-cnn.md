@@ -1,5 +1,5 @@
 ---
-title: Tensorflow(2) - 卷积神经网络
+title: TensorFlow(2) - 卷积神经网络
 date: 2017-08-14 23:20:21
 tags: [TensorFlow, CNN, Tutorial]
 categories: Deep Learning

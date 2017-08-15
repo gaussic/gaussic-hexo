@@ -7,6 +7,8 @@ categories: Deep Learning
 
 >  本章主要说明如何使用神经网络训练MNIST手写体字符识别，以及如何可视化权重。
 
+这是几篇与原作不完全相同的教程，转载请说明出处：[Gaussic](https://gaussic.github.io/)
+
 原作者：[Magnus Erik Hvass Pedersen](http://www.hvass-labs.org/)  / [GitHub](https://github.com/Hvass-Labs/TensorFlow-Tutorials) / [Videos on YouTube](https://www.youtube.com/playlist?list=PL9Hr9sNUjfsmEu1ZniY0XpHSzl5uihcXZ)
 
 在[上一章节](https://gaussic.github.io/2017/08/11/tensorflow-linear-model/)中，我们在MNIST数据集上得到了91%的测试准确率。这个结果其实并不太理想。

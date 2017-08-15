@@ -7,6 +7,8 @@ categories: Deep Learning
 
 >  本章主要说明如何使用TensorFlow API简化神经网络构建，以及新的变量获取方法，在原作的基础上会做相应的改变。
 
+这是几篇与原作不完全相同的教程，转载请说明出处：[Gaussic](https://gaussic.github.io/)
+
 原作者：[Magnus Erik Hvass Pedersen](http://www.hvass-labs.org/)  / [GitHub](https://github.com/Hvass-Labs/TensorFlow-Tutorials) / [Videos on YouTube](https://www.youtube.com/playlist?list=PL9Hr9sNUjfsmEu1ZniY0XpHSzl5uihcXZ)
 
 在[第二章](https://gaussic.github.io/2017/08/14/tensorflow-cnn/)中，我们实现了使用卷积神经网络对MNIST数据集进行分类。可以发现，需要实现一个简单的CNN模型，也需要实现很多细节类的代码，如定义权重、偏置、展平操作等。TensorFlow对这些模型做了一定的API封装，使得使用者可以更加方便地实现神经网络的构建。
@@ -238,8 +240,8 @@ num_filters1 = 16         # 共 16 个卷积核
 filter_size2 = 5          # 5 x 5 卷积核
 num_filters2 = 36         # 共 36 个卷积核
 
-# Fully-connected layer.
-fc_size = 128             # Number of neurons in fully-connected layer.
+# 全连接层
+fc_size = 128             # 全连接层神经元数
 
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')          # 原始输入
 x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])                # 转换为2维图像

@@ -7,6 +7,8 @@ categories: [Deep Learning]
 
 > 本章主要通过线性模型介绍TensorFlow的一些基本使用流程。
 
+这是几篇与原作不完全相同的教程，转载请说明出处：[Gaussic](https://gaussic.github.io/)
+
 原作者：[Magnus Erik Hvass Pedersen](http://www.hvass-labs.org/)  / [GitHub](https://github.com/Hvass-Labs/TensorFlow-Tutorials) / [Videos on YouTube](https://www.youtube.com/playlist?list=PL9Hr9sNUjfsmEu1ZniY0XpHSzl5uihcXZ)
 
 ## 需要导入的包

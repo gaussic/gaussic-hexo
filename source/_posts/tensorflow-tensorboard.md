@@ -589,5 +589,3 @@ def mnist_model(learning_rate, use_two_fc, use_two_conv, hparam):
 ![tensorflow-tensorboard/tsne2.png](tensorflow-tensorboard/tsne2.png)
 
 可见，Embedding能够反映聚类的属性，这对我们观察分类性能有很直观的帮助。Embedding常用在文本中，例如判断词向量的相似程度。
-
-![tensorflow-tensorboard/tsne4.gif](tensorflow-tensorboard/tsne4.gif)

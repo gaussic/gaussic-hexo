@@ -7,7 +7,11 @@ categories: Deep Learning
 
 读了将近一个下午的[TensorFlow Recurrent Neural Network](https://www.tensorflow.org/tutorials/recurrent)教程，翻看其在[PTB](https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb)上的实现，感觉晦涩难懂，因此参考了部分代码，自己写了一个简化版的Language Model，思路借鉴了Keras的[LSTM text generation](https://github.com/fchollet/keras/blob/master/examples/lstm_text_generation.py)。
 
-## 语言模型介绍
+代码地址：[Github](https://github.com/gaussic/tf-rnnlm)
+
+转载请注明出处：[Gaussic](https://gaussic.github.io/)
+
+## 语言模型
 
 Language Model，即语言模型，其主要思想是，在知道前一部分的词的情况下，推断出下一个最有可能出现的词。例如，知道了 `The fat cat sat on the`，我们认为下一个词为`mat`的可能性比`hat`要大，因为猫更有可能坐在毯子上，而不是帽子上。
 

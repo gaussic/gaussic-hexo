@@ -1,11 +1,11 @@
 ---
-title: 使用Tensorflow训练循环神经网络语言模型
+title: 使用TensorFlow训练循环神经网络语言模型
 date: 2017-08-24 18:27:59
 tags: [TensorFlow, Language Model, RNN]
 categories: Deep Learning
 ---
 
-读了将近一个下午的[TensorFlow Recurrent Neural Network](https://www.tensorflow.org/tutorials/recurrent)教程，翻看其在[PTB](https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb)上的实现，感觉晦涩难懂，因此参考了部分代码，自己写了一个简化版的Lanugage Model，思路借鉴了Keras的[LSTM text generation](https://github.com/fchollet/keras/blob/master/examples/lstm_text_generation.py)。
+读了将近一个下午的[TensorFlow Recurrent Neural Network](https://www.tensorflow.org/tutorials/recurrent)教程，翻看其在[PTB](https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb)上的实现，感觉晦涩难懂，因此参考了部分代码，自己写了一个简化版的Language Model，思路借鉴了Keras的[LSTM text generation](https://github.com/fchollet/keras/blob/master/examples/lstm_text_generation.py)。
 
 ## 语言模型介绍
 
@@ -39,7 +39,6 @@ $$
 
 >（公式后的n-1应该为下标，插件问题，下同）
 
-那么知道前面一部分
 可以看出一个问题，每当计算下一个词的条件概率，需要计算前面所有词的联合概率。这个计算量相当的庞大。并且，一个句子中大部分词同时出现的概率往往少之又少，数据稀疏非常严重，需要一个非常大的语料库来训练。
 
 一个简单的优化是基于马尔科夫假设，下一个词的出现仅与前面的一个或n个词有关。
@@ -58,7 +57,7 @@ $$
 
 这样的条件概率虽然好求，但是会丢失大量的前面的词的信息，有时会对结果产生不良影响。因此如何选择一个有效的n，使得既能简化计算，又能保留大部分的上下文信息。
 
-以上均是传统语言模型的描述。如果不太深究细节，只需要知道，我们的任务是，知道前面n个词，来计算下一个词出现的概率。并且使用语言模型来生成新的文本。
+以上均是传统语言模型的描述。如果不太深究细节，我们的任务就是，知道前面n个词，来计算下一个词出现的概率。并且使用语言模型来生成新的文本。
 
 在本文中，我们更加关注的是，如何使用RNN来推测下一个词。
 
@@ -249,3 +248,199 @@ the
 ```
 
 ## 构建模型
+
+### 配置项
+
+```python
+class LMConfig(object):
+    """language model 配置项"""
+    batch_size = 64       # 每一批数据的大小
+    num_steps = 20        # 每一个句子的长度
+    stride = 3            # 取数据时的步长
+
+    embedding_dim = 64    # 词向量维度
+    hidden_dim = 128      # RNN隐藏层维度
+    num_layers = 2        # RNN层数
+
+    learning_rate = 0.05  # 学习率
+    dropout = 0.2         # 每一层后的丢弃概率
+```
+
+### 读取输入
+
+让模型可以按批次的读取数据。
+
+```python
+class PTBInput(object):
+    """按批次读取数据"""
+    def __init__(self, config, data):
+        self.batch_size = config.batch_size
+        self.num_steps = config.num_steps
+        self.vocab_size = config.vocab_size # 词汇表大小
+
+        self.input_data, self.targets = ptb_producer(data,
+            self.batch_size, self.num_steps)
+
+        self.batch_len = self.input_data.shape[0] # 总批次
+        self.cur_batch = 0  # 当前批次
+
+    def next_batch(self):
+        """读取下一批次"""
+        x = self.input_data[self.cur_batch]
+        y = self.targets[self.cur_batch]
+
+        # 转换为one-hot编码
+        y_ = np.zeros((y.shape[0], self.vocab_size), dtype=np.bool)
+        for i in range(y.shape[0]):
+            y_[i][y[i]] = 1
+
+        # 如果到最后一个批次，则回到最开头
+        self.cur_batch = (self.cur_batch +1) % self.batch_len
+
+        return x, y_
+```
+
+### 模型
+
+```python
+class PTBModel(object):
+    def __init__(self, config, is_training=True):
+
+        self.num_steps = config.num_steps
+        self.vocab_size = config.vocab_size
+
+        self.embedding_dim = config.embedding_dim
+        self.hidden_dim = config.hidden_dim
+        self.num_layers = config.num_layers
+        self.rnn_model = config.rnn_model
+
+        self.learning_rate = config.learning_rate
+        self.dropout = config.dropout
+
+        self.placeholders()  # 输入占位符
+        self.rnn()           # rnn 模型构建
+        self.cost()          # 代价函数
+        self.optimize()      # 优化器
+        self.error()         # 错误率
+
+
+    def placeholders(self):
+        """输入数据的占位符"""
+        self._inputs = tf.placeholder(tf.int32, [None, self.num_steps])
+        self._targets = tf.placeholder(tf.int32, [None, self.vocab_size])
+
+
+    def input_embedding(self):
+        """将输入转换为词向量表示"""
+        with tf.device("/cpu:0"):
+            embedding = tf.get_variable(
+                "embedding", [self.vocab_size,
+                    self.embedding_dim], dtype=tf.float32)
+            _inputs = tf.nn.embedding_lookup(embedding, self._inputs)
+
+        return _inputs
+
+
+    def rnn(self):
+        """rnn模型构建"""
+        def lstm_cell():  # 基本的lstm cell
+            return tf.contrib.rnn.BasicLSTMCell(self.hidden_dim,
+                state_is_tuple=True)
+
+        def gru_cell():   # gru cell，速度更快
+            return tf.contrib.rnn.GRUCell(self.hidden_dim)
+
+        def dropout_cell():    # 在每个cell后添加dropout
+            if (self.rnn_model == 'lstm'):
+                cell = lstm_cell()
+            else:
+                cell = gru_cell()
+            return tf.contrib.rnn.DropoutWrapper(cell,
+                output_keep_prob=self.dropout)
+
+        cells = [dropout_cell() for _ in range(self.num_layers)]
+        cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)  # 多层rnn
+
+        _inputs = self.input_embedding()
+        _outputs, _ = tf.nn.dynamic_rnn(cell=cell,
+            inputs=_inputs, dtype=tf.float32)
+
+        # _outputs的shape为 [batch_size, num_steps, hidden_dim]
+        last = _outputs[:, -1, :]  # 只需要最后一个输出
+
+        # dense 和 softmax 用于分类，以找出各词的概率
+        logits = tf.layers.dense(inputs=last, units=self.vocab_size)   
+        prediction = tf.nn.softmax(logits)  
+
+        self._logits = logits
+        self._pred = prediction
+
+    def cost(self):
+        """计算交叉熵代价函数"""
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
+            logits=self._logits, labels=self._targets)
+        cost = tf.reduce_mean(cross_entropy)
+        self.cost = cost
+
+    def optimize(self):
+        """使用adam优化器"""
+        optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+        self.optim = optimizer.minimize(self.cost)
+
+    def error(self):
+        """计算错误率"""
+        mistakes = tf.not_equal(
+            tf.argmax(self._targets, 1), tf.argmax(self._pred, 1))
+        self.errors = tf.reduce_mean(tf.cast(mistakes, tf.float32))
+```
+
+### 训练
+
+```python
+def run_epoch(num_epochs=10):
+    config = LMConfig()   # 载入配置项
+
+    # 载入源数据，这里只需要训练集
+    train_data, _, _, words, word_to_id = \
+        ptb_raw_data('simple-examples/data')
+    config.vocab_size = len(words)
+
+    # 数据分批
+    input_train = PTBInput(config, train_data)
+    batch_len = input_train.batch_len
+
+    # 构建模型
+    model = PTBModel(config)
+
+    # 创建session，初始化变量
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+
+    print('Start training...')
+    for epoch in range(num_epochs):  # 迭代轮次
+        for i in range(batch_len):   # 经过多少个batch
+            x_batch, y_batch = input_train.next_batch()
+
+            # 取一个批次的数据，运行优化
+            feed_dict = {model._inputs: x_batch, model._targets: y_batch}
+            sess.run(model.optim, feed_dict=feed_dict)
+
+            # 每500个batch，输出一次中间结果
+            if i % 500 == 0:
+                cost = sess.run(model.cost, feed_dict=feed_dict)
+
+                msg = "Epoch: {0:>3}, batch: {1:>6}, Loss: {2:>6.3}"
+                print(msg.format(epoch + 1, i + 1, cost))
+
+                # 输出部分预测结果
+                pred = sess.run(model._pred, feed_dict=feed_dict)
+                word_ids = sess.run(tf.argmax(pred, 1))
+                print('Predicted:', ' '.join(words[w] for w in word_ids))
+                true_ids = np.argmax(y_batch, 1)
+                print('True:', ' '.join(words[w] for w in true_ids))
+
+    print('Finish training...')
+    sess.close()
+```
+
+需要经过多次的训练才能得到一个较为合理的结果。

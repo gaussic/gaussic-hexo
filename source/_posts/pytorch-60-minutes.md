@@ -1,11 +1,11 @@
 ---
-title: Pytorch整理（一）：60分钟入门
+title: Pytorch整理：60分钟入门
 date: 2017-05-05 17:58:33
 tags: [Python, Pytorch, Tutorial]
 categories: Deep Learning
 ---
 
-由于种种奇怪的原因，近段时间开始尝试使用Pytorch。照着官方给的教程慢慢搞，稍微有一点点理解。在这里做一点小小的记录和翻译工作。
+由于种种原因，近段时间开始尝试使用Pytorch。照着官方给的教程慢慢搞，稍微有一点点理解。在这里做一点小小的记录和翻译工作。
 
 官方地址：[Deep Learning with PyTorch: A 60 Minute Blitz](http://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html)
 
@@ -19,7 +19,7 @@ categories: Deep Learning
 - 训练一个小的神经网络模型用于分类图像。
 
 
-## 什么是Pytorch
+### 什么是Pytorch
 
 这是一个基于Python的科学计算包，主要针对两类人群：
 
@@ -28,22 +28,17 @@ categories: Deep Learning
 
 ### 开始
 
-#### Tensors 
+#### Tensors
 
 Tensors类似于numpy的ndarray，但是带了一些附加的功能，例如可以使用GPU加速计算等等。
-
-```python
-import torch
-```
 
 构建一个未初始化的 5x3 矩阵：
 
 ```python
+import torch
 x = torch.Tensor(5, 3)
 print(x)
 ```
-
-输出：
 
 ```python
 1.00000e-28 *
@@ -62,8 +57,6 @@ x = torch.rand(5, 3)
 print(x)
 ```
 
-输出：
-
 ```python
  0.5453  0.4855  0.7236
  0.3199  0.4525  0.4917
@@ -79,14 +72,12 @@ print(x)
 print(x.size())
 ```
 
-输出:
-
 ```python
 torch.Size([5, 3])
 ```
 
 > 注意：
-> 
+>
 > `torch.Size` 实际上是一个元组，因此它支持相同的操作。
 
 #### 运算操作
@@ -99,8 +90,6 @@ torch.Size([5, 3])
 y = torch.rand(5, 3)
 print(x + y)
 ```
-
-输出：
 
 ```python
  1.1177  0.8514  1.1459
@@ -116,8 +105,6 @@ print(x + y)
 ```python
 print(torch.add(x, y))
 ```
-
-输出：
 
 ```python
  1.1177  0.8514  1.1459
@@ -136,8 +123,6 @@ torch.add(x, y, out=result)
 print(result)
 ```
 
-输出：
-
 ```python
  1.1177  0.8514  1.1459
  1.1878  0.9249  0.5759
@@ -147,7 +132,7 @@ print(result)
 [torch.FloatTensor of size 5x3]
 ```
 
-加法：就地
+加法：就地(in-place)
 
 ```python
 # adds x to y
@@ -155,7 +140,6 @@ y.add_(x)
 print(y)
 ```
 
-输出：
 
 ```python
  1.1177  0.8514  1.1459
@@ -174,8 +158,6 @@ print(y)
 ```python
 print(x[:, 1])
 ```
-
-输出：
 
 ```python
  0.4855
@@ -203,8 +185,6 @@ a = torch.ones(5)
 print(a)
 ```
 
-输出：
-
 ```python
  1
  1
@@ -218,7 +198,6 @@ print(a)
 b = a.numpy()
 print(b)
 ```
-输出：
 
 ```python
 [ 1.  1.  1.  1.  1.]
@@ -231,8 +210,6 @@ a.add_(1)
 print(a)
 print(b)
 ```
-
-输出：
 
 ```python
  2
@@ -258,8 +235,6 @@ print(a)
 print(b)
 ```
 
-输出：
-
 ```python
 [ 2.  2.  2.  2.  2.]
 
@@ -273,7 +248,7 @@ print(b)
 
 除了CharTensor之外，CPU上的所有Tensor都支持与Numpy数组的来回转换。
 
-### CUDA Tensors
+#### CUDA Tensors
 
 可以使用`.cuda`函数将Tensor转移到GPU上。
 
@@ -285,7 +260,7 @@ if torch.cuda.is_available():
     x + y
 ```
 
-## Autograd:自动求导
+### Autograd:自动求导
 
 Pytorch中所有神经网络的中心部分是`autograd`包。我们首先浏览一下它，然后再构建我们的第一个神经网络。
 
@@ -293,7 +268,7 @@ Pytorch中所有神经网络的中心部分是`autograd`包。我们首先浏览
 
 让我们用几个简单的例子来了解几个简单的术语。
 
-### Variable 变量
+#### Variable 变量
 
 `autograd.Variable`是这个包的中心类。它包装一个Tensor，并且支持几乎所有定义在这个Tensor上的运算。一旦你完成了你的计算，你可以调用`.backward()`来自动地计算全部的梯度。
 
@@ -319,8 +294,6 @@ x = Variable(torch.ones(2, 2), requires_grad=True)
 print(x)
 ```
 
-输出：
-
 ```python
 Variable containing:
  1  1
@@ -335,8 +308,6 @@ y = x + 2
 print(y)
 ```
 
-输出：
-
 ```python
 Variable containing:
  3  3
@@ -349,8 +320,6 @@ Variable containing:
 ```python
 print(y.creator)
 ```
-
-输出:
 
 ```python
 <torch.autograd._functions.basic_ops.AddConstant object at 0x108ada4a8>
@@ -365,8 +334,6 @@ out = z.mean()
 print(z, out)
 ```
 
-输出：
-
 ```python
 Variable containing:
  27  27
@@ -377,7 +344,7 @@ Variable containing:
 [torch.FloatTensor of size 1]
 ```
 
-### Gradients 梯度
+#### Gradients 梯度
 
 让我们使用反向传播`out.backward()`，它等同于`out.backward(torch.Tensor([1.0]))`。
 
@@ -391,8 +358,6 @@ out.backward()
 print(x.grad)
 ```
 
-输出：
-
 ```python
 Variable containing:
  4.5000  4.5000
@@ -400,7 +365,19 @@ Variable containing:
 [torch.FloatTensor of size 2x2]
 ```
 
-你应该会得到一个`4.5`的矩阵。让我们称`out`变量为*o*。我们有$o = \frac{1}{4}\sum_i z_i$，$z_i = 3(x_i+2)^2$ 以及 $ z\_i\bigr\rvert_{x_i=1} = 27 $ 。因此，$\frac{\partial o}{\partial x_i} = \frac{3}{2}(x_i+2)$，从而$\frac{\partial o}{\partial x\_i}\bigr\rvert_{x_i=1} = \frac{9}{2} = 4.5$。
+你应该会得到一个`4.5`的矩阵。让我们称`out`变量为*o*。我们有
+
+$$o = \frac{1}{4}\sum_i z_i$$
+
+$$z_i = 3(x_i+2)^2$$
+
+$$ z\_i\bigr\rvert_{x_i=1} = 27 $$
+
+因此，
+
+$$\frac{\partial o}{\partial x_i} = \frac{3}{2}(x_i+2)$$
+
+$$\frac{\partial o}{\partial x\_i}\bigr\rvert_{x_i=1} = \frac{9}{2} = 4.5$$
 
 你还可以使用autograd做一些疯狂的事情！
 
@@ -414,8 +391,6 @@ while y.data.norm() < 1000:
 
 print(y)
 ```
-
-输出：
 
 ```python
 Variable containing:
@@ -432,8 +407,6 @@ y.backward(gradients)
 print(x.grad)
 ```
 
-输出:
-
 ```python
 Variable containing:
   102.4000
@@ -446,7 +419,7 @@ Variable containing:
 
 `Variable`和`Function`的文档：[http://pytorch.org/docs/autograd](http://pytorch.org/docs/autograd)
 
-## 神经网络
+### 神经网络
 
 神经网络可以使用`torch.nn`包来构建。
 
@@ -467,7 +440,7 @@ Variable containing:
 - 梯度反向传播给网络的参数
 - 更新网络的权重，通常使用一个简单的更新规则：`weight = weight + learning_rate * gradient`
 
-### 定义网络
+#### 定义网络
 
 ```python
 import torch
@@ -476,7 +449,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Net(nn.Module):
-    
+
     def __init__(self):
         super(Net, self).__init__()
         # 1 图像输入通道, 6 输出通道, 5x5 正方形卷积核
@@ -486,7 +459,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
-        
+
     def forward(self, x):
         # 使用 (2, 2) 窗口最大池化
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
@@ -497,19 +470,17 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-    
+
     def num_flat_features(self, x):
         size = x.size()[1:]   # 所有维度，除了批尺寸
         num_features = 1
         for s in size:
             num_features *= s
         return num_features
-        
+
 net = Net()
 print(net)
 ```
-
-输出：
 
 ```python
 Net (
@@ -531,8 +502,6 @@ print(len(params))
 print(params[0].size())  # conv1's .weight
 ```
 
-输出：
-
 ```python
 10
 torch.Size([6, 1, 5, 5])
@@ -545,8 +514,6 @@ input = Variable(torch.randn(1, 1, 32, 32))
 out = net(input)
 print(out)
 ```
-
-输出：
 
 ```python
 Variable containing:
@@ -562,11 +529,11 @@ out.backward(torch.randn(1, 10))
 ```
 
 > 注意：
-> 
+>
 > `torch.nn`仅支持mini-batch。整个的`torch.nn`包仅支持小批量的数据，而不是一个单独的样本。
-> 
+>
 > 例如，`nn.Conv2d`应传入一个4D的Tensor，维度为`nSamples x nChannels x Height x Width`。
-> 
+>
 > 如果你有一个单独的样本，使用`input.unsqueeze(0)`来添加一个伪批维度。
 
 在继续之前，我们先回顾一下迄今为止的所有课程。
@@ -589,7 +556,7 @@ out.backward(torch.randn(1, 10))
 - 计算损失
 - 更新网络权重
 
-### 损失函数
+#### 损失函数
 
 一个损失函数以一个(output, target)对为输入，然后计算一个值用以估计输出结果离目标结果多远。
 
@@ -605,8 +572,6 @@ criterion = nn.MSELoss()
 loss = criterion(output, target)
 print(loss)
 ```
-
-输出：
 
 ```python
 Variable containing:
@@ -631,15 +596,13 @@ print(loss.creator.previous_functions[0][0])  # linear
 print(loss.creator.previous_functions[0][0].previous_functions[0][0])  # ReLU
 ```
 
-输出：
-
 ```python
 <torch.nn._functions.thnn.auto.MSELoss object at 0x10e0bdd68>
 <torch.nn._functions.linear.Linear object at 0x10e0bdba8>
 <torch.nn._functions.thnn.auto.Threshold object at 0x10e0bdac8>
 ```
 
-### 反向传播
+#### 反向传播
 
 要进行反向传播，我们只需要调用`loss.backward()`。你需要清除现有的梯度，否则梯度将累积到现有梯度。
 
@@ -656,8 +619,6 @@ loss.backward()
 print('conv1.bias.grad after backward')
 print(net.conv1.bias.grad)
 ```
-
-输出：
 
 ```python
 conv1.bias.grad before backward
@@ -691,11 +652,11 @@ Variable containing:
 
 - 更新网络权重
 
-### 更新权重
+#### 更新权重
 
 实践中最简单的更新规则是随机梯度下降（SGD）：
 
-```
+```python
 weight = weight - learning_rate * gradient
 ```
 
@@ -709,7 +670,7 @@ for f in net.parameters():
 
 然而，当您使用神经网络时，您希望使用各种不同的更新规则，例如SGD，Nesterov-SGD，Adam，RMSProp等等。为了实现这一点，我们构建一个小的包：`torch.optim`，来实现所有的方法。使用非常简单：
 
-```
+```python
 import torch.optim as optim
 
 # create your optimizer
@@ -723,13 +684,13 @@ loss.backward()
 optimizer.step()    # Does the update
 ```
 
-## 训练一个分类器
+### 训练一个分类器
 
 在此，你已经知道如何定义神经网络，计算损失以及更新网络权重。
 
 现在你可能会想，
 
-### 数据怎么办
+#### 数据怎么办
 
 一般来说，当你处理图像、文本、音频或视频数据时，你可以使用标准的python包来将数据载入到numpy数组中。然后你可以将这个数组转化为`torch.Tensor`。
 
@@ -786,13 +747,6 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=4,
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 ```
 
-输出：
-
-```python
-Downloading http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to ./data/cifar-10-python.tar.gz
-Files already downloaded and verified
-```
-
 让我们展示一些训练图像。
 
 ```python
@@ -815,8 +769,6 @@ imshow(torchvision.utils.make_grid(images))
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 ```
 
-输出：
-
 ![cifar_train_1](pytorch-60-minutes/cifar_train_1.png)
 
 #### 2. 定义一个卷积神经网络
@@ -837,7 +789,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
-        
+
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
@@ -846,7 +798,7 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-    
+
 net = Net()
 ```
 
@@ -869,19 +821,19 @@ for epoch in range(10): # loop over the dataset multiple times
     for i, data in enumerate(trainloader, 0):
         # get the input
         inputs, labels = data
-        
+
         # wrap time in Variable
         inputs, labels = Variable(inputs), Variable(labels)
-        
+
         # zero the parameter gradients
         optimizer.zero_grad()
-        
+
         # forward + backward + optimize
         outputs = net(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        
+
         # print statistics
         running_loss += loss.data[0]
         if i % 2000 == 1999:   # print every 2000 mini-batches
@@ -891,8 +843,6 @@ for epoch in range(10): # loop over the dataset multiple times
 
 print('Finished Training')
 ```
-
-输出：
 
 ```python
 [1,  2000] loss: 1.184
@@ -975,8 +925,6 @@ imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 ```
 
-输出：
-
 ![cifar_test_1](pytorch-60-minutes/cifar_test_1.png)
 
 再来看一下神经网络认为这些样本是什么。
@@ -990,8 +938,6 @@ _, predicted = torch.max(outputs.data, 1)
 
 print('Predicted: ', ' '.join('%5s' % classes[predicted[j][0]] for j in range(4)))
 ```
-
-输出：
 
 ```python
 Predicted:  horse plane horse  frog
@@ -1010,11 +956,9 @@ for data in testloader:
     _, predicted = torch.max(outputs.data, 1)
     total += labels.size(0)
     correct += (predicted == labels).sum()
-    
+
 print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
 ```
-
-输出：
 
 ```python
 Accuracy of the network on the 10000 test images: 63 %
@@ -1036,12 +980,10 @@ for data in testloader:
         label = labels[i]
         class_correct[label] += c[i]
         class_total[label] += 1
-        
+
 for i in range(10):
     print('Accuracy of %5s: %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
 ```
-
-输出：
 
 ```python
 Accuracy of plane: 59 %
@@ -1076,7 +1018,7 @@ inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
 
 为什么我没有注意到相比CPU的巨大的加速？因为你的神经网络非常小。
 
-**训练**：试着增加你的网络宽度（将第一个`nn.Conv@d`增广2，将第二个`nn.Conv2d`增广1 - 它们需要相同的数量），看看你的网络提速了多少。
+**训练**：试着增加你的网络宽度（将第一个`nn.Conv2d`增广2，将第二个`nn.Conv2d`增广1 - 它们需要相同的数量），看看你的网络提速了多少。
 
 **目标达成：**
 
@@ -1084,5 +1026,3 @@ inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
 - 训练一个小的神经网络来分类图像
 
 转载请说明出处：[Gaussic:夜露](https://gaussic.github.io/2017/05/05/pytorch-60-minutes/)
-
-

@@ -11,11 +11,11 @@ categories: Deep Learning
 
 转载请注明出处：[Gaussic](https://gaussic.github.io/)
 
-## 语言模型
+### 语言模型
 
 Language Model，即语言模型，其主要思想是，在知道前一部分的词的情况下，推断出下一个最有可能出现的词。例如，知道了 `The fat cat sat on the`，我们认为下一个词为`mat`的可能性比`hat`要大，因为猫更有可能坐在毯子上，而不是帽子上。
 
-这可能被你认为是常识，但是在自然语言处理中，这个任务是可以用概率统计模型来描述的。就拿`The fat cat sat on the mat`来说。我们可能统计出第一个词`The`出现的概率$p(The)$，`The`后面是`fat`的条件概率为$p(fat|The)$，`The fat`同时出现的联合概率：
+这可能被你认为是常识，但是在自然语言处理中，这个任务是可以用概率统计模型来描述的。就拿`The fat cat sat on the mat`来说。我们可能统计出第一个词`The`出现的概率 $p(The)$ ，`The`后面是`fat`的条件概率为 $p(fat|The)$ ，`The fat`同时出现的联合概率：
 
 $$
 p(The, fat) = p(The)·p(fat|The)
@@ -65,7 +65,7 @@ $$
 
 在本文中，我们更加关注的是，如何使用RNN来推测下一个词。
 
-## 数据准备
+### 数据准备
 
 TensorFlow的官方文档使用的是Mikolov准备好的PTB数据集。我们可以将其下载并解压出来：
 
@@ -99,7 +99,7 @@ print(f[:20])
 
 得到：
 
-```
+```python
 ['aer', 'banknote', 'berlitz', 'calloway', 'centrust', 'cluett', 'fromstein', 'gitano', 'guterman', 'hydro-quebec', 'ipo', 'kia', 'memotec', 'mlx', 'nahb', 'punts', 'rake', 'regatta', 'rubens', 'sim']
 ```
 
@@ -126,7 +126,7 @@ print(list(map(lambda x: words_to_id[x], words[:10])))
 
 输出：
 
-```
+```python
 ('the', '<unk>', '<eos>', 'N', 'of', 'to', 'a', 'in', 'and', "'s")
 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
@@ -146,7 +146,7 @@ print(words_in_file[:20])
 
 词汇表已根据词频进行排序，由于第一句话非英文，所以id靠后。
 
-```
+```python
 [9980, 9988, 9981, 9989, 9970, 9998, 9971, 9979, 9992, 9997, 9982, 9972, 9993, 9991, 9978, 9983, 9974, 9986, 9999, 9990]
 ```
 
@@ -251,9 +251,9 @@ print(words[np.argmax(y_train[100, 3])])
 the
 ```
 
-## 构建模型
+### 构建模型
 
-### 配置项
+#### 配置项
 
 ```python
 class LMConfig(object):
@@ -270,7 +270,7 @@ class LMConfig(object):
     dropout = 0.2         # 每一层后的丢弃概率
 ```
 
-### 读取输入
+#### 读取输入
 
 让模型可以按批次的读取数据。
 
@@ -304,7 +304,7 @@ class PTBInput(object):
         return x, y_
 ```
 
-### 模型
+#### 模型
 
 ```python
 class PTBModel(object):
@@ -398,7 +398,7 @@ class PTBModel(object):
         self.errors = tf.reduce_mean(tf.cast(mistakes, tf.float32))
 ```
 
-### 训练
+#### 训练
 
 ```python
 def run_epoch(num_epochs=10):

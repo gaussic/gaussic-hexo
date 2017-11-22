@@ -9,6 +9,8 @@ $ brew install node@6
 $ brew link node@6
 ```
 
+(已换成node8)
+
 npm安装插件有时候比较慢，可以使用淘宝的镜像解决：[淘宝 NPM 镜像](https://npm.taobao.org/)
 
 ## 安装 hexo

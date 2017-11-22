@@ -1,5 +1,5 @@
 ---
-title: TensorFlow(2) - 卷积神经网络
+title: TensorFlow - 卷积神经网络
 date: 2017-08-14 23:20:21
 tags: [TensorFlow, CNN, Tutorial]
 categories: Deep Learning
@@ -15,7 +15,7 @@ categories: Deep Learning
 
 在本章中，我们将使用卷积神经网络来得到一个准确率更高的模型，接近99%。卷积神经网络使用共享的卷积核对图像进行卷积操作，以提取图像深层特征。这些深层特征然后组合成特征向量输入全连接的神经网络中，再使用类似上一章的方法进行分类。
 
-## 网络结构图
+### 网络结构图
 
 在本章中需要实现的整个网络结构如下图所示：
 
@@ -27,7 +27,7 @@ categories: Deep Learning
 
 经过两层卷积后，将36张7x7的图像展平，得到一个7x7x36的向量，输入到一个128维的全连接层，再输入到10维的softmx层进行分类，这一块与上一章类似。
 
-### 卷积层
+#### 卷积层
 
 卷积层使用多个卷积核作用于同一幅图像，以得到多个卷积后的图像。如下图所示：
 
@@ -37,7 +37,7 @@ categories: Deep Learning
 
 此外，对于每一个卷积层的输出，一般会经过一个relu层，以保证全部的像素值都为正（因为所有为负的像素值都被设定为0）。
 
-## 需要导入的包
+### 需要导入的包
 
 ```python
 import tensorflow as tf          # TensorFlow
@@ -53,7 +53,7 @@ import math
 %matplotlib inline       
 ```
 
-## 卷积神经网络配置
+### 卷积神经网络配置
 
 ```python
 # 卷积层 1
@@ -68,7 +68,7 @@ num_filters2 = 36        # 共 36 个卷积核
 fc_size = 128            # Number of neurons in fully-connected layer.
 ```
 
-## 载入数据
+### 载入数据
 
 TensorFlow在样例教程中已经做了下载并导入MNIST数字手写体识别数据集的实现，可以直接使用。以下代码会将MNIST数据集下载到`data/MNIST`目录下，将标签保存为`one-hot`编码。
 
@@ -86,16 +86,14 @@ print('- 测试集：{}'.format(len(data.test.labels)))
 print('- 验证集：{}'.format(len(data.validation.labels)))
 ```
 
-输出：
-
-```
+```python
 数据集大小：
 - 训练集：55000
 - 测试集：10000
 - 验证集：5000
 ```
 
-###  One-hot编码
+####  One-hot编码
 
 每一张图的标签使用了`one-hot`编码保存在numpy矩阵中，而不是原本的类别，这是为了方便神经网络的处理。
 
@@ -103,9 +101,7 @@ print('- 验证集：{}'.format(len(data.validation.labels)))
 print(data.test.labels[:5])
 ```
 
-输出：
-
-```
+```python
 [[ 0.  0.  0.  0.  0.  0.  0.  1.  0.  0.]
  [ 0.  0.  1.  0.  0.  0.  0.  0.  0.  0.]
  [ 0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
@@ -119,13 +115,11 @@ data.test.cls = np.argmax(data.test.labels, axis=1)
 print(data.test.cls[:5])
 ```
 
-输出：
-
-```
+```python
 [7 2 1 0 4]
 ```
 
-### 数据维度
+#### 数据维度
 
 在MNIST数据集中，原始的28*28像素的黑白图片被展平为784维的向量。
 
@@ -134,9 +128,7 @@ print("样本维度：", data.train.images.shape)
 print("标签维度：", data.train.labels.shape)
 ```
 
-输出：
-
-```
+```python
 样本维度： (55000, 784)
 标签维度： (55000, 10)
 ```
@@ -152,7 +144,7 @@ num_channels = 1                    # 输入为单通道灰度图像
 num_classes = 10                    # 类别数目
 ```
 
-### 打印部分样例图片
+#### 打印部分样例图片
 
 ```python
 def plot_images(images, cls_true, cls_pred=None):
@@ -163,14 +155,14 @@ def plot_images(images, cls_true, cls_pred=None):
     cls_pred: 预测类别
     """
     assert len(images) == len(cls_true) == 9  # 保证存在9张图片
-    
+
     fig, axes = plt.subplots(3, 3)  # 创建3x3个子图的画布
     fig.subplots_adjust(hspace=0.3, wspace=0.3)  # 调整每张图之间的间隔
-    
+
     for i, ax in enumerate(axes.flat):
         # 绘图，将一维向量变为二维矩阵，黑白二值图像使用 binary
         ax.imshow(images[i].reshape(img_shape), cmap='binary')
-        
+
         if cls_pred is None:  # 如果未传入预测类别
             xlabel = "True: {0}".format(cls_true[i])
         else:
@@ -195,11 +187,9 @@ cls_true = data.test.cls[indices]
 plot_images(images, cls_true)
 ```
 
-输出：
-
 ![tensorflow-cnn/plot_image.png](tensorflow-cnn/plot_image.png)
 
-## TensorFlow计算图
+### TensorFlow计算图
 
 TensorFlow使用计算图模型来构建神经网络。其主要流程是先建立好整个网络的计算图模型，然后再导入数据进行计算。
 
@@ -211,7 +201,7 @@ TensorFlow使用计算图模型来构建神经网络。其主要流程是先建�
 - Cost Function： 代价函数，也称损失函数，如何计算模型的误差；
 - Optimizer：        优化器，使用哪种优化策略来降低损失。
 
-### 创建变量
+#### 创建变量
 
 ```python
 def new_weights(shape):  
@@ -223,7 +213,7 @@ def new_biases(length):
 
 卷积神经网络中同样有两类变量，权重和偏置项。注意，这里的初始化只有在运行计算图时才会执行。
 
-### 创建卷积层
+#### 创建卷积层
 
 这个函数创建了一个卷积层。输入为4维的tensor，维度如下：
 
@@ -288,7 +278,7 @@ def new_conv_layer(input,              # 前一层.
     return layer, weights
 ```
 
-### 展平操作
+#### 展平操作
 
 一个卷积层的输出为4维度的tensor。我们需要在卷积层后添加一个全连接层，首先得将4为的tensor展平为2维的tensor，这样才能直接输入到全连接层。
 
@@ -301,7 +291,7 @@ def flatten_layer(layer):
     # 特征数量: img_height * img_width * num_channels
     # 可以使用TensorFlow内建操作计算.
     num_features = layer_shape[1:4].num_elements()
-    
+
     # 将形状重塑为 [num_images, num_features].
     # 注意只设定了第二个维度的尺寸为num_filters，第一个维度为-1，保证第一个维度num_images不变
     # 展平后的层的形状为:
@@ -311,7 +301,7 @@ def flatten_layer(layer):
     return layer_flat, num_features
 ```
 
-### 创建全连接层
+#### 创建全连接层
 
 ```python
 def new_fc_layer(input,          # 前一层.
@@ -333,7 +323,7 @@ def new_fc_layer(input,          # 前一层.
     return layer
 ```
 
-### Placeholder占位符
+#### Placeholder占位符
 
 占位符为输入与输出占据位置，这些输入输出一般在不同的轮次都会有所变化。由于TensorFlow先构图再计算，所以需要使用占位符为输入和输出预留位置。
 
@@ -344,7 +334,7 @@ y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')  #
 y_true_cls = tf.argmax(y_true, axis=1)                  # 转换为真实类别，与之前的使用placeholder不同
 ```
 
-### 卷积层 1
+#### 卷积层 1
 
 ```python
 layer_conv1, weights_conv1 = \
@@ -356,15 +346,13 @@ layer_conv1, weights_conv1 = \
 print(layer_conv1)
 ```
 
-输出：
-
-```
+```python
 Tensor("Relu:0", shape=(?, 14, 14, 16), dtype=float32)
 ```
 
 输入为(?, 28, 28, 1)的图像，其中?为图像数量。可以看到，第一个卷积层的输入为(?, 14, 14, 16)的tensor，即14x14像素的16通道图像。
 
-### 卷积层 2
+#### 卷积层 2
 
 ```python
 layer_conv2, weights_conv2 = \
@@ -376,15 +364,13 @@ layer_conv2, weights_conv2 = \
 print(layer_conv2)
 ```
 
-输出：
-
 ```python
 Tensor("Relu_1:0", shape=(?, 7, 7, 36), dtype=float32)
 ```
 
 解释同上，输入为上一层的输出。
 
-### 展平层
+#### 展平层
 
 展平层将第二个卷积层展平为二维tensor。
 
@@ -393,15 +379,13 @@ layer_flat, num_features = flatten_layer(layer_conv2)
 print(layer_flat)
 ```
 
-输出：
-
-```
+```python
 Tensor("Reshape_1:0", shape=(?, 1764), dtype=float32)
 ```
 
 输出为(?, 1764)的tensor。
 
-### 全连接层 1
+#### 全连接层 1
 
 ```python
 layer_fc1 = new_fc_layer(input=layer_flat,   # 展平层输出
@@ -411,15 +395,13 @@ layer_fc1 = new_fc_layer(input=layer_flat,   # 展平层输出
 print(layer_fc1)
 ```
 
-输出：
-
-```
+```python
 Tensor("Relu_2:0", shape=(?, 128), dtype=float32)
 ```
 
 输出为(?, 128)的2维tensor。
 
-### 全连接层 2
+#### 全连接层 2
 
 ```python
 layer_fc2 = new_fc_layer(input=layer_fc1,           # 上一全连接层
@@ -429,15 +411,13 @@ layer_fc2 = new_fc_layer(input=layer_fc1,           # 上一全连接层
 print(layer_fc2)
 ```
 
-输出：
-
-```
+```python
 Tensor("add_3:0", shape=(?, 10), dtype=float32)
 ```
 
 输出为(?, 10)的二维tensor，意在判定输入图像属于哪一类, 注意该层未使用relu，因为将要输入到后续的softmax中。
 
-### 预测类别
+#### 预测类别
 
 第二个全连接层估计输入的图像属于某一类别的程度，这个估计有些粗糙，需要添加一个softmax层归一化为概率表示。
 
@@ -446,7 +426,7 @@ y_pred = tf.nn.softmax(layer_fc2)              # softmax归一化
 y_pred_cls = tf.argmax(y_pred, axis=1)         # 真实类别
 ```
 
-### 代价函数
+#### 代价函数
 
 这一部分与上一章的类似。
 
@@ -456,7 +436,7 @@ cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
 cost = tf.reduce_mean(cross_entropy)
 ```
 
-### 优化方法
+#### 优化方法
 
 这一部分与上一章类似，但是优化器使用改进版的梯度下降，Adam。
 
@@ -464,7 +444,7 @@ cost = tf.reduce_mean(cross_entropy)
 optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 ```
 
-### 性能度量
+#### 性能度量
 
 同上一章
 
@@ -473,9 +453,9 @@ correct_prediction = tf.equal(y_pred_cls, y_true_cls)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 ```
 
-## 运行TensorFlow计算图
+### 运行TensorFlow计算图
 
-### 创建Session以及变量初始化
+#### 创建Session以及变量初始化
 
 TensorFlow计算图运行在一个session中，计算之前需要先创建这个session，并初始化其中的一些变量（w 和 b），TensorFlow使用`session.run()`来运行计算图。
 
@@ -484,7 +464,7 @@ session = tf.Session()   # 创建session
 session.run(tf.global_variables_initializer())   # 变量初始化
 ```
 
-### 执行优化的帮助函数
+#### 执行优化的帮助函数
 
 同第一章，添加了部分状态输出的代码：
 
@@ -525,7 +505,7 @@ def optimize(num_iterations):
     print("用时: " + str(timedelta(seconds=int(round(time_dif)))))
 ```
 
-### 输出部分错误样例和混淆矩阵
+#### 输出部分错误样例和混淆矩阵
 
 与上一章类似。
 
@@ -536,26 +516,26 @@ def plot_example_errors(cls_pred, correct):
     images = data.test.images[incorrect]
     cls_pred = cls_pred[incorrect]
     cls_true = data.test.cls[incorrect]
-    
+
     # 随机挑选9个
     indices = np.arange(len(images))
     np.random.shuffle(indices)
-    indices = indices[:9] 
+    indices = indices[:9]
 
     plot_images(images[indices], cls_true[indices], cls_pred[indices])
 
 def plot_confusion_matrix(cls_pred):
     cls_true = data.test.cls  # 真实类别  
-    
+
     # 使用scikit-learn的confusion_matrix来计算混淆矩阵
     cm = confusion_matrix(y_true=cls_true, y_pred=cls_pred)
-    
+
     # 打印混淆矩阵
     print(cm)
-    
+
     # 将混淆矩阵输出为图像
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-    
+
     # 调整图像
     plt.tight_layout()
     plt.colorbar()
@@ -567,7 +547,7 @@ def plot_confusion_matrix(cls_pred):
     plt.show()
 ```
 
-### 显示性能的帮助函数
+#### 显示性能的帮助函数
 
 用来输出测试准确率的的函数。计算所有图像的分类需要一定的时间，因此我们在上面定义的一些函数中重用了分类结果。这个函数会占据大量的内存，所以将测试集分成了多个小的批次。如果你的机器内存太小，你可以尝试减小batch_size。
 
@@ -628,30 +608,26 @@ def print_test_accuracy(show_example_errors=False,
         plot_confusion_matrix(cls_pred=cls_pred)
 ```
 
-### 优化前的性能测试
+#### 优化前的性能测试
 
 ```python
 print_test_accuracy()
 ```
 
-输出：
-
-```
+```python
 测试集准确率: 4.2% (424 / 10000)
 ```
 
 可以看到，测试的准确率极低，但是函数的功能正常。
 
-### 执行一轮优化后的性能
+#### 执行一轮优化后的性能
 
 ```python
 optimize(num_iterations=1)
 print_test_accuracy()
 ```
 
-输出：
-
-```
+```python
 迭代轮次:      1, 训练准确率:   3.1%
 用时: 0:00:00
 测试集准确率: 5.3% (534 / 10000)
@@ -659,32 +635,28 @@ print_test_accuracy()
 
 一轮迭代后，性能稍有提升。
 
-### 100轮优化后的性能
+#### 100轮优化后的性能
 
 ```python
 optimize(num_iterations=99)
 print_test_accuracy()
 ```
 
-输出：
-
-```
+```python
 用时: 0:00:08
 测试集准确率: 70.8% (7077 / 10000)
 ```
 
 可以看到，执行100轮迭代后，性能存在大幅度提升。
 
-### 1000轮优化后性能
+#### 1000轮优化后性能
 
 ```python
 optimize(num_iterations=900)
 print_test_accuracy(show_example_errors=True)
 ```
 
-输出：
-
-```
+```python
 迭代轮次:    101, 训练准确率:  70.3%
 迭代轮次:    201, 训练准确率:  87.5%
 迭代轮次:    301, 训练准确率:  84.4%
@@ -703,7 +675,7 @@ Example errors:
 
 可以发现，测试集的准确率为93.5%，已经比第一章的91.9%要高。输出的部分错误样例显示，部分形状相似的数字仍然难以区分。
 
-### 10000轮次优化后的性能
+#### 10000轮次优化后的性能
 
 ```python
 optimize(num_iterations=9000)
@@ -711,9 +683,7 @@ print_test_accuracy(show_example_errors=True,
                     show_confusion_matrix=True)
 ```
 
-输出：
-
-```
+```python
 迭代轮次:   1001, 训练准确率:  93.8%
 迭代轮次:   1101, 训练准确率:  92.2%
 迭代轮次:   1201, 训练准确率:  95.3%
@@ -811,7 +781,7 @@ Example errors:
 
 ![tensorflow-cnn/plot_example_errors1.png](tensorflow-cnn/plot_example_errors1.png)
 
-```
+```python
 Confusion Matrix:
 [[ 974    0    1    0    0    1    1    1    2    0]
  [   0 1130    1    0    0    1    0    2    1    0]
@@ -829,16 +799,16 @@ Confusion Matrix:
 
 经过10000轮迭代后，测试集的准确率达到了98.7%的准确率。在分错的样本中，部分用肉眼也难以分辨。而混淆矩阵表明绝大部分的样本都分类正确。这是一个非常好的模型。
 
-## 权重和层的可视化
+### 权重和层的可视化
 
 为了更好的理解卷积神经网络为何能识别手写体数字，我来来可视化部分权重和层输出。
 
-### 卷积权重可视化
+#### 卷积权重可视化
 
 ```python
 def plot_conv_weights(weights, input_channel=0):
     # weights_conv1 or weights_conv2.
-    
+
     # 运行weights以获得权重
     w = session.run(weights)
 
@@ -851,7 +821,7 @@ def plot_conv_weights(weights, input_channel=0):
 
     # 需要输出的卷积核
     num_grids = math.ceil(math.sqrt(num_filters))
-    
+
     fig, axes = plt.subplots(num_grids, num_grids)
     for i, ax in enumerate(axes.flat):
         # 只输出有用的子图.
@@ -861,14 +831,14 @@ def plot_conv_weights(weights, input_channel=0):
 
             ax.imshow(img, vmin=w_min, vmax=w_max,
                       interpolation='nearest', cmap='seismic')
-        
+
         # 移除坐标.
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
 ```
 
-### 卷积层输出可视化
+#### 卷积层输出可视化
 
 ```python
 def plot_conv_layer(layer, image):
@@ -885,7 +855,7 @@ def plot_conv_layer(layer, image):
 
     # 每行需要输出的卷积核网格数
     num_grids = math.ceil(math.sqrt(num_filters))
-    
+
     fig, axes = plt.subplots(num_grids, num_grids)
     for i, ax in enumerate(axes.flat):
         # 只输出有用的子图.
@@ -894,14 +864,14 @@ def plot_conv_layer(layer, image):
             img = values[0, :, :, i]
 
             ax.imshow(img, interpolation='nearest', cmap='binary')
-        
+
         # 移除坐标.
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
 ```
 
-### 打印输入图像
+#### 打印输入图像
 
 ```python
 def plot_image(image):
@@ -914,12 +884,10 @@ def plot_image(image):
 
 打印第一章图像：
 
-```
+```python
 image1 = data.test.images[0]
 plot_image(image1)
 ```
-
-输出：
 
 ![tensorflow-cnn/plot_image1.png](tensorflow-cnn/plot_image1.png)
 
@@ -930,11 +898,9 @@ image2 = data.test.images[13]
 plot_image(image2)
 ```
 
-输出：
-
 ![tensorflow-cnn/plot_image2.png](tensorflow-cnn/plot_image2.png)
 
-### 卷积层 1
+#### 卷积层 1
 
 ```python
 plot_conv_weights(weights=weights_conv1)
@@ -960,7 +926,7 @@ plot_conv_layer(layer=layer_conv1, image=image2)
 
 ![tensorflow-cnn/conv_1_2.png](tensorflow-cnn/conv_1_2.png)
 
-### 卷积层 2
+#### 卷积层 2
 
 现在输出第二个卷积层的权重。
 
@@ -1003,8 +969,3 @@ plot_conv_layer(layer=layer_conv1, image=image2)
 ```python
 session.close()
 ```
-
-
-
-
-

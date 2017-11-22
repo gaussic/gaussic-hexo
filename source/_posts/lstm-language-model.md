@@ -5,8 +5,9 @@ tags:  [LSTM, Language Model]
 categories: Deep Learning
 ---
 
+转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io)
 
-测试了一下Keras的[LSTM_text_generation](https://github.com/fchollet/keras/blob/master/examples/lstm_text_generation.py)的例子。
+基于Keras的[LSTM_text_generation](https://github.com/fchollet/keras/blob/master/examples/lstm_text_generation.py)的例子，实现中文的语言模型。
 
 代码在这里：[Github fancywriter](https://github.com/gaussic/fancywriter/blob/master/language-model-keras.ipynb)
 
@@ -16,51 +17,51 @@ categories: Deep Learning
 
 ![model-visualization](lstm-language-model/model-visualization.png)
 
-### 预处理
+#### 预处理
 
 整个的数据需要经过预处理之后，才能使用到网络中：
 
+```python
+def load_data(self, path):
+    # read the entire text
+    text = open(path).read().strip().replace('\u3000', '').replace('\n', '')
+    print('corpus length:', len(text))
+
+    # all the vocabularies
+    vocab = sorted(list(set(text)))
+    print('total words:', len(vocab))
+
+    # create word-index dict
+    word_to_index = dict((c, i) for i, c in enumerate(vocab))
+    index_to_word = dict((i, c) for i, c in enumerate(vocab))
+
+    # cut the text into fixed size sequences
+    sentences = []
+    next_words = []
+    for i in range(0, len(text) - self.seq_length, self.step):
+        sentences.append(list(text[i: i+self.seq_length]))
+        next_words.append(text[i+self.seq_length])
+    print('nb sequences:', len(sentences))
+
+    # generate training samples
+    X = np.asarray([[word_to_index[w] for w in sent[:]] for sent in sentences])
+    y = np.zeros((len(sentences), len(vocab)))
+    for i, word in enumerate(next_words):
+        y[i, word_to_index[word]] = 1
 ```
-    def load_data(self, path):
-        # read the entire text
-        text = open(path).read().strip().replace('\u3000', '').replace('\n', '')
-        print('corpus length:', len(text))
-        
-        # all the vocabularies
-        vocab = sorted(list(set(text)))
-        print('total words:', len(vocab))
 
-        # create word-index dict
-        word_to_index = dict((c, i) for i, c in enumerate(vocab))
-        index_to_word = dict((i, c) for i, c in enumerate(vocab))
-        
-        # cut the text into fixed size sequences
-        sentences = []
-        next_words = []
-        for i in range(0, len(text) - self.seq_length, self.step):
-            sentences.append(list(text[i: i+self.seq_length]))
-            next_words.append(text[i+self.seq_length])
-        print('nb sequences:', len(sentences))
-        
-        # generate training samples
-        X = np.asarray([[word_to_index[w] for w in sent[:]] for sent in sentences])
-        y = np.zeros((len(sentences), len(vocab)))
-        for i, word in enumerate(next_words):
-            y[i, word_to_index[word]] = 1
-```
+处理之后，X是序列表示，维度为 `(训练集数量, 序列长度)`，y是 `one-hot`向量，维度为`(词汇表长度)`。
 
-处理之后，X是序列表示，维度为 `训练集数量, 序列长度`，y是 `one-hot`向量，维度为`词汇表长度`。
+#### 定义模型
 
-### 定义模型
-
-```
-    def load_model(self):
-        # load a Sequential model
-        model = Sequential()
-        model.add(Embedding(len(self.vocab), self.embed_size, input_length=self.seq_length))
-        model.add(LSTM(self.embed_size, input_shape=(self.seq_length, self.embed_size), return_sequences=False))
-        model.add(Dense(len(self.vocab)))
-        model.add(Activation('softmax'))
+```python
+def load_model(self):
+    # load a Sequential model
+    model = Sequential()
+    model.add(Embedding(len(self.vocab), self.embed_size, input_length=self.seq_length))
+    model.add(LSTM(self.embed_size, input_shape=(self.seq_length, self.embed_size), return_sequences=False))
+    model.add(Dense(len(self.vocab)))
+    model.add(Activation('softmax'))
 ```
 
 首先是Embedding层，把序列转换为词向量表示, `batch_size * seq_length`被映射为 `batch_size * seq_length * embed_size`。
@@ -69,63 +70,63 @@ categories: Deep Learning
 
 再使用Dense将期映射为词汇表长度的向量，再连接softmax激活函数，就是最后的y。
 
-### 编译与训练
+#### 编译与训练
 
-```
-    def compile_model(self, lr=0.01):
-        # compile the model
-        optimizer = RMSprop(lr=lr)
-        self.model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-    
-    def fit_model(self, batch_size=128, nb_epoch=1):
-        # fit the model with trainind data
-        self.model.fit(self.X, self.y, batch_size, nb_epoch)
+```python
+def compile_model(self, lr=0.01):
+    # compile the model
+    optimizer = RMSprop(lr=lr)
+    self.model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+
+def fit_model(self, batch_size=128, nb_epoch=1):
+    # fit the model with trainind data
+    self.model.fit(self.X, self.y, batch_size, nb_epoch)
 ```
 
 优化器选择`RMSprop`，损失函数为`category_crossentropy`。训练时`batch_size`默认为128，轮次默认为1。
 
-### 生成
+#### 生成
 
+```python
+def _sample(self, preds, diversity=1.0):
+    # sample from te given prediction
+    preds = np.asarray(preds).astype('float64')
+    preds = np.log(preds) / diversity
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
+    probas = np.random.multinomial(1, preds, 1)
+
+    return np.argmax(probas)
+
+def generate_text(self):
+    # generate text from randon text seed
+    start_index = random.randint(0, len(self.text) - self.seq_length - 1)
+
+    for diversity in [0.2, 0.5, 1.0, 1.2]:
+        print()
+        print('----- diversity:', diversity)
+
+        generated = ''
+        sentence = self.text[start_index: start_index + self.seq_length]
+        generated += sentence
+        print('----- Generating with seed: "' + sentence + '"')
+        sys.stdout.write(generated)
+
+        for i in range(400):
+            x = np.asarray([self.word_to_index[w] for w in sentence]).reshape([1, self.seq_length])
+            preds = self.predict(x)
+            next_index = self._sample(preds, diversity)
+            next_word = self.index_to_word[next_index]
+
+            generated += next_word
+            sentence = sentence[1:] + next_word
+
+            sys.stdout.write(next_word)
+            sys.stdout.flush()
+        print()         
 ```
-    def _sample(self, preds, diversity=1.0):
-        # sample from te given prediction
-        preds = np.asarray(preds).astype('float64')
-        preds = np.log(preds) / diversity
-        exp_preds = np.exp(preds)
-        preds = exp_preds / np.sum(exp_preds)
-        probas = np.random.multinomial(1, preds, 1)
-        
-        return np.argmax(probas)
-    
-    def generate_text(self):
-        # generate text from randon text seed
-        start_index = random.randint(0, len(self.text) - self.seq_length - 1)
-        
-        for diversity in [0.2, 0.5, 1.0, 1.2]:
-            print()
-            print('----- diversity:', diversity)
-        
-            generated = ''
-            sentence = self.text[start_index: start_index + self.seq_length]
-            generated += sentence
-            print('----- Generating with seed: "' + sentence + '"')
-            sys.stdout.write(generated)
 
-            for i in range(400):
-                x = np.asarray([self.word_to_index[w] for w in sentence]).reshape([1, self.seq_length])
-                preds = self.predict(x)
-                next_index = self._sample(preds, diversity)
-                next_word = self.index_to_word[next_index]
-
-                generated += next_word
-                sentence = sentence[1:] + next_word
-
-                sys.stdout.write(next_word)
-                sys.stdout.flush()
-            print()         
-```
-
-生成时，随机挑选一个序列，预测得到结果，再将结果映射为词，循环生成400次。此处使用了diversity的概念，调整生成结果，以得到不同答案。
+生成时，随机挑选一个序列，预测得到结果，再将结果映射为词，循环生成400次。此处使用了diversity的概念，意在对结果再一次采样，以得到不同答案。
 
 以下是部分结果：
 

@@ -1,5 +1,5 @@
 ---
-title: TensorFlow(3) - Layers API
+title: TensorFlow - Layers API
 date: 2017-08-15 14:47:23
 tags: [TensorFlow, Tutorial, API]
 categories: Deep Learning
@@ -38,15 +38,15 @@ def plot_images(images, cls_true, img_shape, cls_pred=None):
     cls_pred: 预测类别
     """
     assert len(images) == len(cls_true) == 9   # 保证存在9张图片
-    
-    
+
+
     fig, axes = plt.subplots(3, 3)   # 创建3x3个子图的画布
     fig.subplots_adjust(hspace=0.3, wspace=0.3)  # 调整每张图之间的间隔
-    
+
     for i, ax in enumerate(axes.flat):
         # 绘图，将一维向量变为二维矩阵，黑白二值图像使用 binary
         ax.imshow(images[i].reshape(img_shape), cmap='binary')
-        
+
         if cls_pred is None:  # 如果未传入预测类别
             xlabel = "True: {0}".format(cls_true[i])
         else:
@@ -57,7 +57,7 @@ def plot_images(images, cls_true, img_shape, cls_pred=None):
         ax.set_xticks([])
         ax.set_yticks([])    
     plt.show()
-    
+
 
 def plot_example_errors(data_test, cls_pred, correct, img_shape):
     # 计算错误情况
@@ -65,28 +65,28 @@ def plot_example_errors(data_test, cls_pred, correct, img_shape):
     images = data_test.images[incorrect]
     cls_pred = cls_pred[incorrect]
     cls_true = data_test.cls[incorrect]
-    
+
     # 随机挑选9个
     indices = np.arange(len(images))
     np.random.shuffle(indices)
-    indices = indices[:9] 
+    indices = indices[:9]
 
     plot_images(images[indices], cls_true[indices], img_shape, cls_pred[indices])
-    
-    
+
+
 def plot_confusion_matrix(cls_true, cls_pred):  
-    
+
     # 使用scikit-learn的confusion_matrix来计算混淆矩阵
     cm = confusion_matrix(y_true=cls_true, y_pred=cls_pred)
-    
+
     # 打印混淆矩阵
     print(cm)
-    
+
     num_classes = cm.shape[0]
-    
+
     # 将混淆矩阵输出为图像
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-    
+
     # 调整图像
     plt.tight_layout()
     plt.colorbar()
@@ -96,11 +96,11 @@ def plot_confusion_matrix(cls_true, cls_pred):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.show()
-        
-    
+
+
 def plot_conv_weights(weights, input_channel=0):
     # weights_conv1 or weights_conv2.
-    
+
 
     # 获取权重最小值最大值，这将用户纠正整个图像的颜色密集度，来进行对比
     w_min = np.min(weights)
@@ -111,7 +111,7 @@ def plot_conv_weights(weights, input_channel=0):
 
     # 每行需要输出的卷积核网格数
     num_grids = math.ceil(math.sqrt(num_filters))
-    
+
     fig, axes = plt.subplots(num_grids, num_grids)
     for i, ax in enumerate(axes.flat):
         # 只输出有用的子图.
@@ -121,13 +121,13 @@ def plot_conv_weights(weights, input_channel=0):
 
             ax.imshow(img, vmin=w_min, vmax=w_max,
                       interpolation='nearest', cmap='seismic')
-        
+
         # 移除坐标.
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
-    
-    
+
+
 def plot_conv_layer(values):
     # layer_conv1 or layer_conv2
 
@@ -136,7 +136,7 @@ def plot_conv_layer(values):
 
     # 每行需要输出的卷积核网格数
     num_grids = math.ceil(math.sqrt(num_filters))
-    
+
     fig, axes = plt.subplots(num_grids, num_grids)
     for i, ax in enumerate(axes.flat):
         # 只输出有用的子图.
@@ -145,12 +145,12 @@ def plot_conv_layer(values):
             img = values[0, :, :, i]
 
             ax.imshow(img, interpolation='nearest', cmap='binary')
-        
+
         # 移除坐标.
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
-    
+
 
 def plot_image(image, img_shape):
     plt.imshow(image.reshape(img_shape),
@@ -159,7 +159,7 @@ def plot_image(image, img_shape):
     plt.show()
 ```
 
-## 引入
+### 引入
 
 ```python
 from cnn_helper import *
@@ -170,7 +170,7 @@ from cnn_helper import *
 %matplotlib inline
 ```
 
-## 载入数据
+### 载入数据
 
 这一块与前几章一样，不做介绍：
 
@@ -186,9 +186,7 @@ print('- 测试集：{}'.format(len(data.test.labels)))
 print('- 验证集：{}'.format(len(data.validation.labels)))
 ```
 
-输出:
-
-```
+```python
 数据集大小：
 - 训练集：55000
 - 测试集：10000
@@ -201,14 +199,12 @@ print("样本维度：", data.train.images.shape)
 print("标签维度：", data.train.labels.shape)
 ```
 
-输出：
-
-```
+```python
 样本维度： (55000, 784)
 标签维度： (55000, 10)
 ```
 
-```
+```python
 img_size = 28                        # 图片的高度和宽度
 img_size_flat = img_size * img_size  # 展平为向量的尺寸
 img_shape = (img_size, img_size)     # 图片的二维尺寸
@@ -229,7 +225,7 @@ plot_images(images, cls_true, img_shape)
 
 ![tensorflow-layers/plot_image1.png](tensorflow-layers/plot_image1.png)
 
-## 输入输出占位符
+### 输入输出占位符
 
 ```python
 # 卷积层 1
@@ -249,7 +245,7 @@ y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')  #
 y_true_cls = tf.argmax(y_true, axis=1)                                         # 转换为真实类别
 ```
 
-## 使用layers API构建网络
+### 使用layers API构建网络
 
 ```python
 layer_conv1 = tf.layers.conv2d(inputs=x_image,            # 输入
@@ -261,9 +257,7 @@ layer_conv1 = tf.layers.conv2d(inputs=x_image,            # 输入
 print(layer_conv1)
 ```
 
-输出：
-
-```
+```python
 Tensor("layer_conv1/Relu:0", shape=(?, 28, 28, 16), dtype=float32)
 ```
 
@@ -272,17 +266,15 @@ Tensor("layer_conv1/Relu:0", shape=(?, 28, 28, 16), dtype=float32)
 ```python
 net = tf.layers.max_pooling2d(inputs=layer_conv1, pool_size=2, strides=(2, 2),  padding='same')
 layer_conv2 = tf.layers.conv2d(inputs=net,          
-                               filters=num_filters2, 
-                               kernel_size=filter_size2, 
-                               padding='same', 
-                               activation=tf.nn.relu, 
+                               filters=num_filters2,
+                               kernel_size=filter_size2,
+                               padding='same',
+                               activation=tf.nn.relu,
                                name='layer_conv2')
 print(layer_conv2)
 ```
 
-输出：
-
-```
+```python
 Tensor("layer_conv2/Relu:0", shape=(?, 14, 14, 36), dtype=float32)
 ```
 
@@ -295,8 +287,6 @@ layer_flat = tf.contrib.layers.flatten(net)    # flatten暂时在tf.contrib一�
 print(layer_flat)
 ```
 
-输出：
-
 ```python
 Tensor("Flatten/Reshape:0", shape=(?, 1764), dtype=float32)
 ```
@@ -308,9 +298,7 @@ layer_fc1 = tf.layers.dense(inputs=layer_flat, units=fc_size, activation=tf.nn.r
 print(layer_fc1)
 ```
 
-输出：
-
-```
+```python
 Tensor("layer_fc1/Relu:0", shape=(?, 128), dtype=float32)
 ```
 
@@ -321,15 +309,13 @@ layer_fc2 = tf.layers.dense(inputs=layer_fc1, units=num_classes, name='layer_fc2
 print(layer_fc2)
 ```
 
-输出：
-
-```
+```python
 Tensor("layer_fc2/BiasAdd:0", shape=(?, 10), dtype=float32)
 ```
 
 最后使用一个dense层将其映射为(?, 10)的tensor，用于后续的分类。
 
-## 预测
+### 预测
 
 这一部分的代码与第二章完全相同：
 
@@ -347,7 +333,7 @@ correct_prediction = tf.equal(y_pred_cls, y_true_cls)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 ```
 
-## 权重输出
+### 权重输出
 
 为了输出网络的权重，还需要一些其他的操作。TensorFlow内部维护了一系列的变量名。
 
@@ -357,8 +343,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 for var in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
     print(var)
 ```
-
-输出：
 
 ```python
 <tf.Variable 'layer_conv1/kernel:0' shape=(5, 5, 1, 16) dtype=float32_ref>
@@ -397,12 +381,12 @@ def get_weights_variable(layer_name):
     with tf.variable_scope(layer_name, reuse=True):
         variable = tf.get_variable('kernel')
     return variable
-    
+
 weights_conv1 = get_weights_variable(layer_name='layer_conv1')
 weights_conv2 = get_weights_variable(layer_name='layer_conv2')
 ```
 
-## 优化与测试
+### 优化与测试
 
 创建session：
 
@@ -448,7 +432,7 @@ def optimize(num_iterations):
 
     # 输出用时.
     print("用时: " + str(timedelta(seconds=int(round(time_dif)))))
-    
+
 # 将测试集分成更小的批次
 test_batch_size = 256
 
@@ -505,7 +489,7 @@ def print_test_accuracy(show_example_errors=False,
         plot_confusion_matrix(cls_true=cls_true, cls_pred=cls_pred)
 ```
 
-## 结果
+### 结果
 
 直接迭代10000轮：
 
@@ -513,8 +497,6 @@ def print_test_accuracy(show_example_errors=False,
 optimize(num_iterations=10000)
 print_test_accuracy(show_example_errors=True, show_confusion_matrix=True)
 ```
-
-输出：
 
 ```
 迭代轮次:      1, 训练准确率:  15.6%
@@ -624,7 +606,7 @@ Example errors:
 
 ![tensorflow-layers/plot-example1.png](tensorflow-layers/plot_example_error1.png)
 
-```
+```python
 Confusion Matrix:
 [[ 973    0    1    0    0    1    2    1    2    0]
  [   0 1133    1    0    0    0    0    1    0    0]
@@ -641,9 +623,9 @@ Confusion Matrix:
 ![tensorflow-layers/confmat.png](tensorflow-layers/confmat.png)
 
 
-## 权重与层的可视化
+### 权重与层的可视化
 
-### 第一层权重
+#### 第一层权重
 
 ```python
 weights1 = session.run(weights_conv1)
@@ -652,7 +634,7 @@ plot_conv_weights(weights=weights1)
 
 ![tensorflow-layers/weights1.png](tensorflow-layers/weights1.png)
 
-### 第一层输出
+#### 第一层输出
 
 ```python
 image1 = data.test.images[0]
@@ -672,7 +654,7 @@ plot_conv_layer(values=layer1)
 ![tensorflow-layers/conv1_2.png](tensorflow-layers/conv1_2.png)
 
 
-### 第二层权重
+#### 第二层权重
 
 ```python
 weights2 = session.run(weights_conv2)
@@ -687,7 +669,7 @@ plot_conv_weights(weights=weights2, input_channel=0)
 
 ![tensorflow-layers/weights2_2.png](tensorflow-layers/weights2_2.png)
 
-### 第二层输出
+#### 第二层输出
 
 ```python
 layer2 = session.run(layer_conv2, feed_dict={x: [image1]})
@@ -703,7 +685,7 @@ plot_conv_layer(values=layer2)
 
 ![tensorflow-layers/conv2_2.png](tensorflow-layers/conv2_2.png)
 
-## 关闭session
+### 关闭session
 
 ```python
 session.close()

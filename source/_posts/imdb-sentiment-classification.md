@@ -7,21 +7,21 @@ categories: Deep Learning
 
 Github代码： [Keras样例解析](https://github.com/gaussic/keras-examples)
 
-欢迎光临我的博客：[https://gaussic.github.io/2017/03/03/imdb-sentiment-classification/](https://gaussic.github.io/2017/03/03/imdb-sentiment-classification/)
-
-(转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io))
+转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io)
 
 Keras的官方Examples里面展示了四种训练IMDB文本情感分类的方法，借助这4个Python程序，可以对Keras的使用做一定的了解。以下是对各个样例的解析。
 
-## IMDB 数据集
+### IMDB 数据集
 
 IMDB情感分类数据集是Stanford整理的一套IMDB影评的情感数据，它含有25000个训练样本，25000个测试样本。以下是其中的一个正样本:
 
 > Bromwell High is a cartoon comedy. It ran at the same time as some other programs about school life, such as "Teachers". My 35 years in the teaching profession lead me to believe that Bromwell High's satire is much closer to reality than is "Teachers". The scramble to survive financially, the insightful students who can see right through their pathetic teachers' pomp, the pettiness of the whole situation, all remind me of the schools I knew and their students. When I saw the episode in which a student repeatedly tried to burn down the school, I immediately recalled ......... at .......... High. A classic line: INSPECTOR: I'm here to sack one of your teachers. STUDENT: Welcome to Bromwell High. I expect that many adults of my age think that Bromwell High is far fetched. What a pity that it isn't!
 
+原始的数据集可以在此下载：[http://ai.stanford.edu/~amaas/data/sentiment/](http://ai.stanford.edu/~amaas/data/sentiment/)
+
 本文中的Keras样例使用的是整理好已经符号化的pkl文件，其数据格式大致如下：
 
-```
+```python
 from six.moves import cPickle
 (x_train, labels_train), (x_test, labels_test) = cPickle.load(open('imdb_full.pkl', 'rb'))
 print(x_train[0])
@@ -31,7 +31,7 @@ print(labels_train[0])
 ```
 > 更详细的预处理过程请看 [keras/dataset/imdb.py](https://github.com/fchollet/keras/blob/master/keras/datasets/imdb.py)
 
-## FastText
+### FastText
 
 FastText是Joulin等人在[Bags of Tricks for Efficient Text Classification](https://arxiv.org/abs/1607.01759)一文中提到的快速文本分类的方法，论文作者说这个方法可以作为很多文本分类任务的baseline。整个模型的结构如下图所示：
 
@@ -43,7 +43,7 @@ FastText是Joulin等人在[Bags of Tricks for Efficient Text Classification](htt
 
 整个模型的 Keras 实现如下，相关的注释已经加入到代码中：
 
-```
+```python
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
@@ -186,13 +186,13 @@ model.fit(X_train, y_train,
           validation_data=(X_test, y_test))
 ```
 
-### N-gram 特征提取
+#### N-gram 特征提取
 
 本例中 `create_ngram_set()` 和 `add_ngram()` 两个函数用于像输入中添加N-gram特征。
 
 `create_ngram_set()`函数整理了训练集中的所有N-gram特征，再将这些特征添加到词汇表中，其具体操作可参考代码中的注释部分。
 
-```
+```python
 >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=2)
     {(4, 9), (4, 1), (1, 4), (9, 4)}
     >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=3)
@@ -201,37 +201,35 @@ model.fit(X_train, y_train,
 
 `add_ngram()`函数与论文中的思路有些不同，它将一个序列的N-gram特征值（即n-gram特征在词汇表中的Id）放到该序列的尾部，不舍弃原始的序列，其操作如代码中解释：
 
-```
-    Example: adding bi-gram
-    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
-    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
-    >>> add_ngram(sequences, token_indice, ngram_range=2)
-    [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42]]
-    Example: adding tri-gram
-    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
-    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017, (7, 9, 2): 2018}
-    >>> add_ngram(sequences, token_indice, ngram_range=3)
-    [[1, 3, 4, 5, 1337], [1, 3, 7, 9, 2, 1337, 2018]]
+```python
+Example: adding bi-gram
+>>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
+>>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
+>>> add_ngram(sequences, token_indice, ngram_range=2)
+[[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42]]
+Example: adding tri-gram
+>>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
+>>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017, (7, 9, 2): 2018}
+>>> add_ngram(sequences, token_indice, ngram_range=3)
+[[1, 3, 4, 5, 1337], [1, 3, 7, 9, 2, 1337, 2018]]
 ```
 
-### Padding
+#### Padding
 
 Padding有填充的意思，它将不定长的序列变成定长的序列，方便循环神经网络处理，在Keras中，`pad_sequences`的操作过程是，如果序列没有达到最大长度，则在前部补 `0` ，如果超过最大长度，则从后面截取最大长度的序列。
 
-```
+```python
 X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
 X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
 print('X_train shape:', X_train.shape)
 print('X_test shape:', X_test.shape)
 ```
 
-### 模型构建
-
 #### Embedding
 
-首先是一个嵌入层，将样本序列的每个id投影到固定维度的向量空间中，每个id由一个固定维度的词向量表示，即，原先输入的维度为 `[样本个数，序列长度]`，经过嵌入层后，变为 `[样本个数，序列长度，词向量维度]`。
+模型首先是一个嵌入层，将样本序列的每个id投影到固定维度的向量空间中，每个id由一个固定维度的词向量表示，即，原先输入的维度为 `[样本个数，序列长度]`，经过嵌入层后，变为 `[样本个数，序列长度，词向量维度]`。
 
-```
+```python
 model.add(Embedding(max_features, embedding_dims, input_length=maxlen))
 ```
 
@@ -239,13 +237,13 @@ model.add(Embedding(max_features, embedding_dims, input_length=maxlen))
 
 `GlobalAveragePooling1D`的操作非常简单，将输入的词向量序列相加在求平均，整合成一个向量。
 
-```
+```python
 model.add(GlobalAveragePooling1D())
 ```
 
 官方的实现代码是：
 
-```
+```python
 class GlobalAveragePooling1D(_GlobalPooling1D):
     """Global average pooling operation for temporal data.
     # Input shape
@@ -280,17 +278,17 @@ dense_1 (Dense)                  (None, 1)             51          globalaverage
 ====================================================================================================
 ```
 
-### 训练
+#### 训练
 
 在该样例的二元分类器中，使用了二元交叉熵作为损失函数，使用 `adam` 作为优化器，使用 `accuracy` 作为评估矩阵。
 
-```
+```python
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 ```
 
 训练过程中，使用测试集验证训练结果:
 
-```
+```python
 model.fit(X_train, y_train,
           batch_size=batch_size,
           nb_epoch=nb_epoch,
@@ -315,11 +313,15 @@ Epoch 5/5
 
 使用`bi-gram`时，验证集的准确率达到了0.9066。
 
-## CNN
+### CNN
 
-这个例子介绍了如何使用一维卷积来处理文本数据，提供了一种将擅长于图像处理的CNN引入到文本处理中的思路，使用 `Convolution1D` 对序列进行卷积操作，再使用 `GlobalMaxPooling1D` 对其进行最大池化操作，这个处理类似于CNN的特征提取过程，用以提升传统神经网络的效果。其详细代码如下：
+这个例子介绍了如何使用一维卷积来处理文本数据，提供了一种将擅长于图像处理的CNN引入到文本处理中的思路，使用 `Convolution1D` 对序列进行卷积操作，再使用 `GlobalMaxPooling1D` 对其进行最大池化操作，这个处理类似于CNN的特征提取过程，用以提升传统神经网络的效果。
 
-```
+CNN做句子分类的论文可以参看: [Convolutional Neural Networks for Sentence Classification](https://arxiv.org/abs/1408.5882)
+
+其详细代码如下：
+
+```python
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
@@ -348,7 +350,7 @@ print('Loading data...')
 print(len(X_train), 'train sequences')
 print(len(X_test), 'test sequences')
 
-# 样本填充到固定长度 maxlen，在每个样本前补 0 
+# 样本填充到固定长度 maxlen，在每个样本前补 0
 print('Pad sequences (samples x time)')
 X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
 X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
@@ -404,15 +406,13 @@ model.fit(X_train, y_train,
           validation_data=(X_test, y_test))
 ```
 
-### 模型构建
-
 #### Embedding
 
 词嵌入层与 FastText 类似，但是多了一个`dropout`参数，它的存在意义是随机的丢弃一部分数据，将一定百分比的数据置为0，这样做有助于防止过拟合。
 
 更多关于 Dropout 的解释可以看论文：[Dropout: A Simple Way to Prevent Neural Networks from Overfitting](http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf)
 
-```
+```python
 model.add(Embedding(max_features,
                     embedding_dims,
                     input_length=maxlen,
@@ -425,7 +425,7 @@ model.add(Embedding(max_features,
 
 > 由于是基于时序卷积，所以 steps 可能会发生变化
 
-```
+```python
 model.add(Convolution1D(nb_filter=nb_filter,
                         filter_length=filter_length,
                         border_mode='valid',
@@ -441,7 +441,7 @@ model.add(Convolution1D(nb_filter=nb_filter,
 
 #### GlobalMaxPooling1D
 
-```
+```python
 model.add(GlobalMaxPooling1D())
 ```
 
@@ -449,7 +449,7 @@ model.add(GlobalMaxPooling1D())
 
 官方的实现如下：
 
-```
+```python
 class GlobalMaxPooling1D(_GlobalPooling1D):
     """Global max pooling operation for temporal data.
     # Input shape
@@ -468,7 +468,7 @@ class GlobalMaxPooling1D(_GlobalPooling1D):
 
 再接上单神经元的全连接层进行分类，这一点与 FastText 相同。
 
-```
+```python
 # We add a vanilla hidden layer:
 # 添加一个原始隐藏层
 model.add(Dense(hidden_dims))
@@ -505,7 +505,7 @@ activation_2 (Activation)        (None, 1)             0           dense_2[0][0]
 ====================================================================================================
 ```
 
-### 训练
+#### 训练
 
 训练过程与 FastText 相同，不再赘述。
 
@@ -537,11 +537,11 @@ Epoch 10/10
 
 训练后，在验证集上得到了0.8851的准确率。
 
-## LSTM
+### LSTM
 
 LSTM在NLP任务中已经成为了较为基础的工具，但是在这个任务中，由于数据集较小，所以无法发挥其巨大的优势，另外由于其训练速度较慢，所以有时候一些更快更简便的算法可能是个更好的选择。其详细代码如下：
 
-```
+```python
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
@@ -602,11 +602,9 @@ print('Test score:', score)
 print('Test accuracy:', acc)
 ```
 
-### 模型构建
-
 IMDB的LSTM模型构建非常简单，与 FastText 相类似，以下做总体介绍：
 
-```
+```python
 print('Build model...')
 model = Sequential()
 # 嵌入层，每个词维度为128
@@ -637,7 +635,7 @@ activation_1 (Activation)        (None, 1)             0           dense_1[0][0]
 ====================================================================================================
 ```
 
-### 训练
+#### 训练
 
 训练过程与 FastText 和 CNN 相同，不再赘述。
 
@@ -683,11 +681,11 @@ Test accuracy: 0.82
 
 (转载请注明出处：[https://gaussic.github.io](https://gaussic.github.io))
 
-## CNN + LSTM
+### CNN + LSTM
 
 在阅读了上面三种方案的解析，对于 CNN+LSTM 方案的解析应该不会陌生。CNN+LSTM 是 CNN 和 LSTM 的结合体，其详细代码如下：
 
-```
+```python
 from __future__ import print_function
 import numpy as np
 np.random.seed(1337)  # for reproducibility
@@ -705,7 +703,7 @@ from keras.datasets import imdb
 max_features = 20000   # 词汇表大小
 maxlen = 100           # 序列最大长度
 embedding_size = 128   # 词向量维度
-  
+
 # Convolution  卷积
 filter_length = 5    # 滤波器长度
 nb_filter = 64       # 滤波器个数
@@ -778,11 +776,9 @@ print('Test accuracy:', acc)
 
 ```
 
-### 模型构建
+模型构建的代码：
 
-提取出模型构建的代码：
-
-```
+```python
 model = Sequential()
 model.add(Embedding(max_features, embedding_size, input_length=maxlen))  # 词嵌入层
 model.add(Dropout(0.25))       # Dropout层
@@ -832,7 +828,7 @@ activation_1 (Activation)        (None, 1)             0           dense_1[0][0]
 ====================================================================================================
 ```
 
-### 训练
+#### 训练
 
 训练过程不再赘述。
 

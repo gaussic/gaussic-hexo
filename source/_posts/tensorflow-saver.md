@@ -1,5 +1,5 @@
 ---
-title: TensorFlow(4) - 保存/恢复/提前终止
+title: TensorFlow - 保存/恢复/提前终止
 date: 2017-08-15 22:40:31
 tags: [TensorFlow, Tutorial, Saver]
 categories: Deep Learning
@@ -19,7 +19,7 @@ categories: Deep Learning
 
 事实上，TensorFlow提供了保存和恢复训练的方法，可以避免这类事情的发生。在本章中，我们将继续使用[第三章](https://gaussic.github.io/2017/08/15/tensorflow-layers/)的大部分代码，只做小部分的修改，以实现我们的目的。
 
-## 载入数据，构建模型
+### 载入数据，构建模型
 
 这一部分与第三章相似，但是我们在本章中使用验证集来验证模型性能，因此需要稍作改动。此外，需要用到上一章给出的`cnn_helper.py`。
 
@@ -32,7 +32,7 @@ from cnn_helper import *
 %matplotlib inline
 ```
 
-### 数据
+#### 数据
 
 ```python
 from tensorflow.examples.tutorials.mnist import input_data
@@ -45,9 +45,7 @@ print('- 测试集：{}'.format(len(data.test.labels)))
 print('- 验证集：{}'.format(len(data.validation.labels)))
 ```
 
-输出：
-
-```
+```python
 数据集大小：
 - 训练集：55000
 - 测试集：10000
@@ -59,7 +57,7 @@ data.test.cls = np.argmax(data.test.labels, axis=1)
 data.validation.cls = np.argmax(data.validation.labels, axis=1)
 ```
 
-### 神经网络参数
+#### 神经网络参数
 
 ```python
 img_size = 28                        # 图片的高度和宽度
@@ -83,7 +81,7 @@ num_filters2 = 36         # 共 36 个卷积核
 fc_size = 128             # 全连接层神经元数
 ```
 
-### 占位符
+#### 占位符
 
 ```python
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')          # 原始输入
@@ -92,7 +90,7 @@ y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')  #
 y_true_cls = tf.argmax(y_true, axis=1)                                         # 转换为真实类别
 ```
 
-### 卷积神经网络
+#### 卷积神经网络
 
 ```python
 layer_conv1 = tf.layers.conv2d(inputs=x_image,            # 输入
@@ -104,10 +102,10 @@ layer_conv1 = tf.layers.conv2d(inputs=x_image,            # 输入
 
 net = tf.layers.max_pooling2d(inputs=layer_conv1, pool_size=2, strides=(2, 2),  padding='same')
 layer_conv2 = tf.layers.conv2d(inputs=net,          
-                               filters=num_filters2, 
-                               kernel_size=filter_size2, 
-                               padding='same', 
-                               activation=tf.nn.relu, 
+                               filters=num_filters2,
+                               kernel_size=filter_size2,
+                               padding='same',
+                               activation=tf.nn.relu,
                                name='layer_conv2')
 
 net = tf.layers.max_pooling2d(inputs=layer_conv2, pool_size=2, strides=(2, 2),  padding='same')
@@ -117,7 +115,7 @@ layer_fc1 = tf.layers.dense(inputs=layer_flat, units=fc_size, activation=tf.nn.r
 layer_fc2 = tf.layers.dense(inputs=layer_fc1, units=num_classes, name='layer_fc2')
 ```
 
-### 代价、优化器、准确率
+#### 代价、优化器、准确率
 
 ```python
 y_pred = tf.nn.softmax(layer_fc2)              # softmax归一化
@@ -132,7 +130,7 @@ correct_prediction = tf.equal(y_pred_cls, y_true_cls)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 ```
 
-### 获取权重
+#### 获取权重
 
 ```python
 def get_weights_variable(layer_name):
@@ -145,7 +143,7 @@ weights_conv1 = get_weights_variable(layer_name='layer_conv1')
 weights_conv2 = get_weights_variable(layer_name='layer_conv2')
 ```
 
-###  Saver
+####  Saver
 
 为了保存神经网络中的变量，我们需要创建一个Saver对象用来存储和检索TensorFlow计算图中的所有变量。我们可以保存训练过程中的所有结果，在这里仅保存最优的结果。
 
@@ -155,20 +153,20 @@ saver = tf.train.Saver()    # 用于保存变量
 save_dir = 'checkpoints/'   # 保存目录
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
-    
+
 save_path = os.path.join(save_dir, 'best_validation')   # 最佳验证结果保存路径
 ```
 
-## 运行TensorFlow
+### 运行TensorFlow
 
-### 创建session并初始化
+#### 创建session并初始化
 
 ```python
 session = tf.Session()
 session.run(tf.global_variables_initializer())
 ```
 
-### 优化器的迭代过程
+#### 优化器的迭代过程
 
 为了测试优化器的性能，需要多添加几个指标，对代码进行相应调整。
 
@@ -195,7 +193,7 @@ def optimize(num_iterations):
 
     for i in range(num_iterations):
         total_iterations += 1
-        
+
         # 获取一批数据，运行优化器
         x_batch, y_true_batch = data.train.next_batch(train_batch_size)
         feed_dict_train = {x: x_batch, y_true: y_true_batch}
@@ -207,19 +205,19 @@ def optimize(num_iterations):
             acc_train = session.run(accuracy, feed_dict=feed_dict_train)
             # 验证集准确率，为了尽可能重用代码，这个函数会在后面实现
             acc_validation, _ = validation_accuracy()
-            
+
             if acc_validation > best_validation_accuracy:   # 如果当前验证集准确率大于之前的最好准确率
                 best_validation_accuracy = acc_validation   # 更新最好准确率
                 last_improvement = total_iterations         # 更新上一次提升的迭代轮次
-                
+
                 saver.save(sess=session, save_path=save_path)   # 将这一次更新保存下来
                 improved_str = '*'    # 标注为找到提升
             else:
                 improved_str = ''    
-            
+
             msg = "迭代轮次: {0:>6}, 训练集准确率: {1:>6.1%}, 验证集准确率: {2:>6.1%} {3}"
             print(msg.format(i + 1, acc_train, acc_validation, improved_str))
-    
+
         # 如果在require_improvement轮次内未有提升
         if total_iterations - last_improvement > require_improvement:
             print("长时间未提升, 停止优化。")
@@ -232,7 +230,7 @@ def optimize(num_iterations):
     print("用时: " + str(timedelta(seconds=int(round(time_dif)))))
 ```
 
-### 计算分类性能
+#### 计算分类性能
 
 为了重用代码以评估验证集和测试集的性能，需要重构这部分代码：
 
@@ -290,7 +288,7 @@ def validation_accuracy():    # optimize()用到的验证集准确率函数
 ```
 
 
-### 测试集性能评估
+#### 测试集性能评估
 
 ```python
 def print_test_accuracy(show_example_errors=False,
@@ -301,7 +299,7 @@ def print_test_accuracy(show_example_errors=False,
 
     # 计算准确率，准确数
     acc, num_correct = cls_accuracy(correct)
-    
+
     num_images = len(correct)
 
     # 打印准确率.
@@ -325,8 +323,6 @@ def print_test_accuracy(show_example_errors=False,
 print_test_accuracy()
 ```
 
-输出：
-
 ```
 测试集准确率: 13.5% (1348 / 10000)
 ```
@@ -336,8 +332,6 @@ print_test_accuracy()
 ```python
 optimize(num_iterations=10000)
 ```
-
-输出：
 
 ```
 迭代轮次:    100, 训练集准确率:  81.2%, 验证集准确率:  78.9% *
@@ -352,71 +346,71 @@ optimize(num_iterations=10000)
 迭代轮次:   1000, 训练集准确率:  96.9%, 验证集准确率:  95.5% *
 迭代轮次:   1100, 训练集准确率:  93.8%, 验证集准确率:  95.7% *
 迭代轮次:   1200, 训练集准确率:  98.4%, 验证集准确率:  96.0% *
-迭代轮次:   1300, 训练集准确率:  96.9%, 验证集准确率:  95.8% 
+迭代轮次:   1300, 训练集准确率:  96.9%, 验证集准确率:  95.8%
 迭代轮次:   1400, 训练集准确率:  96.9%, 验证集准确率:  96.1% *
 迭代轮次:   1500, 训练集准确率:  98.4%, 验证集准确率:  96.3% *
 迭代轮次:   1600, 训练集准确率:  98.4%, 验证集准确率:  96.7% *
 迭代轮次:   1700, 训练集准确率:  92.2%, 验证集准确率:  96.8% *
 迭代轮次:   1800, 训练集准确率:  96.9%, 验证集准确率:  96.9% *
-迭代轮次:   1900, 训练集准确率: 100.0%, 验证集准确率:  96.8% 
+迭代轮次:   1900, 训练集准确率: 100.0%, 验证集准确率:  96.8%
 迭代轮次:   2000, 训练集准确率:  98.4%, 验证集准确率:  97.0% *
 迭代轮次:   2100, 训练集准确率: 100.0%, 验证集准确率:  97.0% *
 迭代轮次:   2200, 训练集准确率:  98.4%, 验证集准确率:  97.4% *
-迭代轮次:   2300, 训练集准确率:  96.9%, 验证集准确率:  97.3% 
-迭代轮次:   2400, 训练集准确率:  96.9%, 验证集准确率:  97.3% 
+迭代轮次:   2300, 训练集准确率:  96.9%, 验证集准确率:  97.3%
+迭代轮次:   2400, 训练集准确率:  96.9%, 验证集准确率:  97.3%
 迭代轮次:   2500, 训练集准确率:  96.9%, 验证集准确率:  97.5% *
-迭代轮次:   2600, 训练集准确率:  98.4%, 验证集准确率:  97.3% 
-迭代轮次:   2700, 训练集准确率:  95.3%, 验证集准确率:  97.4% 
+迭代轮次:   2600, 训练集准确率:  98.4%, 验证集准确率:  97.3%
+迭代轮次:   2700, 训练集准确率:  95.3%, 验证集准确率:  97.4%
 迭代轮次:   2800, 训练集准确率: 100.0%, 验证集准确率:  97.7% *
-迭代轮次:   2900, 训练集准确率:  98.4%, 验证集准确率:  97.7% 
+迭代轮次:   2900, 训练集准确率:  98.4%, 验证集准确率:  97.7%
 迭代轮次:   3000, 训练集准确率:  93.8%, 验证集准确率:  97.8% *
 迭代轮次:   3100, 训练集准确率:  98.4%, 验证集准确率:  97.9% *
-迭代轮次:   3200, 训练集准确率:  98.4%, 验证集准确率:  97.9% 
-迭代轮次:   3300, 训练集准确率:  96.9%, 验证集准确率:  97.9% 
-迭代轮次:   3400, 训练集准确率:  98.4%, 验证集准确率:  97.9% 
-迭代轮次:   3500, 训练集准确率:  96.9%, 验证集准确率:  97.8% 
+迭代轮次:   3200, 训练集准确率:  98.4%, 验证集准确率:  97.9%
+迭代轮次:   3300, 训练集准确率:  96.9%, 验证集准确率:  97.9%
+迭代轮次:   3400, 训练集准确率:  98.4%, 验证集准确率:  97.9%
+迭代轮次:   3500, 训练集准确率:  96.9%, 验证集准确率:  97.8%
 迭代轮次:   3600, 训练集准确率: 100.0%, 验证集准确率:  98.0% *
-迭代轮次:   3700, 训练集准确率:  98.4%, 验证集准确率:  97.8% 
-迭代轮次:   3800, 训练集准确率: 100.0%, 验证集准确率:  97.9% 
-迭代轮次:   3900, 训练集准确率:  98.4%, 验证集准确率:  97.9% 
-迭代轮次:   4000, 训练集准确率: 100.0%, 验证集准确率:  97.7% 
+迭代轮次:   3700, 训练集准确率:  98.4%, 验证集准确率:  97.8%
+迭代轮次:   3800, 训练集准确率: 100.0%, 验证集准确率:  97.9%
+迭代轮次:   3900, 训练集准确率:  98.4%, 验证集准确率:  97.9%
+迭代轮次:   4000, 训练集准确率: 100.0%, 验证集准确率:  97.7%
 迭代轮次:   4100, 训练集准确率:  98.4%, 验证集准确率:  98.1% *
-迭代轮次:   4200, 训练集准确率:  98.4%, 验证集准确率:  98.0% 
-迭代轮次:   4300, 训练集准确率: 100.0%, 验证集准确率:  97.9% 
+迭代轮次:   4200, 训练集准确率:  98.4%, 验证集准确率:  98.0%
+迭代轮次:   4300, 训练集准确率: 100.0%, 验证集准确率:  97.9%
 迭代轮次:   4400, 训练集准确率:  98.4%, 验证集准确率:  98.1% *
-迭代轮次:   4500, 训练集准确率: 100.0%, 验证集准确率:  98.1% 
-迭代轮次:   4600, 训练集准确率: 100.0%, 验证集准确率:  97.9% 
+迭代轮次:   4500, 训练集准确率: 100.0%, 验证集准确率:  98.1%
+迭代轮次:   4600, 训练集准确率: 100.0%, 验证集准确率:  97.9%
 迭代轮次:   4700, 训练集准确率:  98.4%, 验证集准确率:  98.2% *
 迭代轮次:   4800, 训练集准确率:  96.9%, 验证集准确率:  98.2% *
-迭代轮次:   4900, 训练集准确率: 100.0%, 验证集准确率:  98.2% 
+迭代轮次:   4900, 训练集准确率: 100.0%, 验证集准确率:  98.2%
 迭代轮次:   5000, 训练集准确率: 100.0%, 验证集准确率:  98.3% *
-迭代轮次:   5100, 训练集准确率: 100.0%, 验证集准确率:  98.3% 
-迭代轮次:   5200, 训练集准确率:  98.4%, 验证集准确率:  98.3% 
+迭代轮次:   5100, 训练集准确率: 100.0%, 验证集准确率:  98.3%
+迭代轮次:   5200, 训练集准确率:  98.4%, 验证集准确率:  98.3%
 迭代轮次:   5300, 训练集准确率: 100.0%, 验证集准确率:  98.4% *
-迭代轮次:   5400, 训练集准确率:  98.4%, 验证集准确率:  98.3% 
+迭代轮次:   5400, 训练集准确率:  98.4%, 验证集准确率:  98.3%
 迭代轮次:   5500, 训练集准确率:  96.9%, 验证集准确率:  98.4% *
-迭代轮次:   5600, 训练集准确率:  98.4%, 验证集准确率:  98.3% 
+迭代轮次:   5600, 训练集准确率:  98.4%, 验证集准确率:  98.3%
 迭代轮次:   5700, 训练集准确率:  98.4%, 验证集准确率:  98.4% *
 迭代轮次:   5800, 训练集准确率:  98.4%, 验证集准确率:  98.4% *
-迭代轮次:   5900, 训练集准确率:  96.9%, 验证集准确率:  98.4% 
-迭代轮次:   6000, 训练集准确率:  95.3%, 验证集准确率:  98.4% 
-迭代轮次:   6100, 训练集准确率: 100.0%, 验证集准确率:  98.3% 
+迭代轮次:   5900, 训练集准确率:  96.9%, 验证集准确率:  98.4%
+迭代轮次:   6000, 训练集准确率:  95.3%, 验证集准确率:  98.4%
+迭代轮次:   6100, 训练集准确率: 100.0%, 验证集准确率:  98.3%
 迭代轮次:   6200, 训练集准确率: 100.0%, 验证集准确率:  98.5% *
-迭代轮次:   6300, 训练集准确率: 100.0%, 验证集准确率:  98.4% 
+迭代轮次:   6300, 训练集准确率: 100.0%, 验证集准确率:  98.4%
 迭代轮次:   6400, 训练集准确率: 100.0%, 验证集准确率:  98.6% *
-迭代轮次:   6500, 训练集准确率: 100.0%, 验证集准确率:  98.4% 
+迭代轮次:   6500, 训练集准确率: 100.0%, 验证集准确率:  98.4%
 迭代轮次:   6600, 训练集准确率: 100.0%, 验证集准确率:  98.7% *
 迭代轮次:   6700, 训练集准确率: 100.0%, 验证集准确率:  98.7% *
-迭代轮次:   6800, 训练集准确率: 100.0%, 验证集准确率:  98.4% 
-迭代轮次:   6900, 训练集准确率: 100.0%, 验证集准确率:  98.6% 
-迭代轮次:   7000, 训练集准确率:  96.9%, 验证集准确率:  98.7% 
-迭代轮次:   7100, 训练集准确率:  98.4%, 验证集准确率:  98.4% 
-迭代轮次:   7200, 训练集准确率: 100.0%, 验证集准确率:  98.5% 
-迭代轮次:   7300, 训练集准确率:  98.4%, 验证集准确率:  98.6% 
-迭代轮次:   7400, 训练集准确率:  98.4%, 验证集准确率:  98.6% 
-迭代轮次:   7500, 训练集准确率:  98.4%, 验证集准确率:  98.4% 
-迭代轮次:   7600, 训练集准确率: 100.0%, 验证集准确率:  98.6% 
-迭代轮次:   7700, 训练集准确率: 100.0%, 验证集准确率:  98.7% 
+迭代轮次:   6800, 训练集准确率: 100.0%, 验证集准确率:  98.4%
+迭代轮次:   6900, 训练集准确率: 100.0%, 验证集准确率:  98.6%
+迭代轮次:   7000, 训练集准确率:  96.9%, 验证集准确率:  98.7%
+迭代轮次:   7100, 训练集准确率:  98.4%, 验证集准确率:  98.4%
+迭代轮次:   7200, 训练集准确率: 100.0%, 验证集准确率:  98.5%
+迭代轮次:   7300, 训练集准确率:  98.4%, 验证集准确率:  98.6%
+迭代轮次:   7400, 训练集准确率:  98.4%, 验证集准确率:  98.6%
+迭代轮次:   7500, 训练集准确率:  98.4%, 验证集准确率:  98.4%
+迭代轮次:   7600, 训练集准确率: 100.0%, 验证集准确率:  98.6%
+迭代轮次:   7700, 训练集准确率: 100.0%, 验证集准确率:  98.7%
 长时间未提升, 停止优化。
 用时: 0:13:31
 ```
@@ -427,16 +421,14 @@ optimize(num_iterations=10000)
 print_test_accuracy(show_example_errors=True, show_confusion_matrix=True)
 ```
 
-输出：
-
-```
+```python
 测试集准确率: 98.7% (9865 / 10000)
 Example errors:
 ```
 
 ![tensorflow-saver/plot_example_errors.png](tensorflow-saver/plot_example_errors.png)
 
-```
+```python
 Confusion Matrix:
 [[ 973    0    1    0    0    1    2    1    2    0]
  [   0 1127    2    0    0    0    2    1    3    0]
@@ -461,7 +453,7 @@ plot_conv_weights(weights=weights1)
 
 ![tensorflow-saver/weights1_1.png](tensorflow-saver/weights1_1.png)
 
-### 重新初始化
+#### 重新初始化
 
 再次重新初始化所有的变量
 
@@ -473,9 +465,7 @@ session.run(tf.global_variables_initializer())    # 重新初始化
 print_test_accuracy()     # 准确率降回随机
 ```
 
-输出：
-
-```
+```python
 测试集准确率: 19.4% (1937 / 10000)
 ```
 
@@ -490,11 +480,11 @@ plot_conv_weights(weights=weights1)     # 权重也与上面的权重不同
 
 权重也与训练好的模型大不相同。
 
-### 恢复路径下的变量
+#### 恢复路径下的变量
 
 现在需要从变量所保存的路径下恢复所有的变量。
 
-```
+```python
 saver.restore(sess=session, save_path=save_path)   # 现在从保存的目录中重新载入所有的变量
 ```
 
@@ -505,16 +495,14 @@ saver.restore(sess=session, save_path=save_path)   # 现在从保存的目录中
 print_test_accuracy(show_example_errors=True, show_confusion_matrix=True)
 ```
 
-输出：
-
-```
+```python
 测试集准确率: 98.6% (9864 / 10000)
 Example errors:
 ```
 
 ![tensorflow-saver/plot_example_errors2.png](tensorflow-saver/plot_example_errors2.png)
 
-```
+```python
 Confusion Matrix:
 [[ 974    0    1    0    0    1    2    0    1    1]
  [   0 1126    3    0    0    0    2    1    3    0]
@@ -543,7 +531,7 @@ plot_conv_weights(weights=weights1)
 
 在重新载入变量后，我们还可以继续优化这些变量。
 
-## 关闭session
+### 关闭session
 
 ```python
 session.close()

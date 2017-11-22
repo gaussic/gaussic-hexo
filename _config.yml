@@ -84,7 +84,7 @@ math:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: anatole
+theme: anatole2
 
 archive_generator:
   per_page: 0
